@@ -50,8 +50,8 @@ subset_dp = terra::crop(spv_dp, test_area)
 # Convert the spatial vector to a df
 subset_dp = as.data.frame(subset_dp, geom = "XY")
 
-# save the subset
-save(subset_dp, file = "data_points_subset")
+# Save the subset with the formula
+save(subset_dp, fo, file = "data_points_subset.rda")
 ##
 ## End (subset training data for testing)
 #### 

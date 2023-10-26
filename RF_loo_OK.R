@@ -1,0 +1,217 @@
+################################################################################
+## Preparation (strictly necessary)
+################################################################################
+# Load necessary packages
+library("pacman")
+p_load("sp")
+p_load("sf")
+p_load("terra")
+p_load("sperrorest")
+p_load("purrr")
+p_load("parallel")
+p_load("doParallel")
+p_load("foreach")
+
+p_load("ranger")
+p_load("gstat")       
+p_load("nlme")
+p_load("automap")
+
+# Additional functions that are not included in packages
+source("auxiliary_functions.R", encoding = "UTF-8")
+source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
+
+# Fewer decimal places
+options(digits=4)
+
+# Load data and formula (for now use a subset)
+load("data_points_subset.rda")
+d = subset_dp
+
+# Simplified formula for testing
+fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                  cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
+                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                  ok_inter_pred + ok_inter_var)
+
+####
+## Model argument preparation
+##
+
+ok_fo = as.formula(bcNitrate ~ 1)
+##
+## End Model argument preparation)
+####
+################################################################################
+## End (preparation)
+################################################################################
+
+
+################################################################################
+## Random Forest with explanatory variables from leave one out Ordinary Kriging  
+## (RF-llo-OK) prediction 
+################################################################################
+################################################################################
+## End (RF-llo-OK prediction) 
+################################################################################
+
+
+################################################################################
+## RF-llo-OK spatial leave one out cross validation 
+################################################################################
+#####
+## Get the mean and median prediction distance 
+## (for now use the test area as prediction area)
+##
+
+m_m_pd = mean_med_predDist(path_predArea = "test_area.gpkg", dataPoints_df = d,
+                           c_r_s = "EPSG:25832")
+##
+## End (get the mean and median prediction distance)
+####
+
+####
+## llo-OK
+##
+llo_OK_fun = function(data, buffer_dist, ok_fo){
+  # Leave one out resampling
+  resamp = partition_loo(data = data, ndisc = nrow(data), replace = FALSE, 
+                         coords = c("x","y"), buffer = buffer_dist, 
+                         repetition = 1)
+  # Create a spatial points df 
+  sp_df = sp::SpatialPointsDataFrame(coords = data[,c("x","y")], data = data)
+  # Foreach for parallel processing
+  ok_i_p = foreach (i = 1:nrow(sp_df),
+                    .packages = c("gstat", "automap", "sp")) %dopar%{
+                      # Get training and test ids
+                      id_train = resamp[["1"]][[i]]$train
+                      id_test = resamp[["1"]][[i]]$test
+                      
+                      # Get a training and test spatial points df 
+                      train_sp_df = sp_df[id_train, ]
+                      test_sp_df = sp_df[id_test, ]
+                      
+                      # Fit spherical variogram model
+                      resid_vm = autofitVariogram(formula = ok_fo, 
+                                                  input_data = train_sp_df, 
+                                                  model = c("Sph"),
+                                                  cressie = TRUE)
+                      # Get the model
+                      resid_vmm = resid_vm["var_model"]$var_model
+                      
+                      # Interpolation
+                      ok_pred = krige(ok_fo, train_sp_df, 
+                                      model = resid_vmm, newdata = test_sp_df,
+                                      debug.level = 0)
+                      pred = c(ok_pred$var1.pred, ok_pred$var1.var)
+                    }
+  
+}
+
+# Setup backend to use many processors
+totalCores = detectCores()
+
+# Leave two cores to reduce computer load
+cluster = makeCluster(totalCores[1]-2) 
+registerDoParallel(cluster)
+
+# Exectute OK function
+llo_ok_res = llo_OK_fun(data = d, 
+                          buffer_dist = m_m_pd$med_predDist, 
+                          ok_fo = ok_fo) 
+
+# Stop cluster
+stopCluster(cluster)
+
+# Add the results to the df 
+llo_ok_res_vec = unlist(llo_ok_res)
+ok_inter_pred = llo_ok_res_vec[seq(1, length(llo_ok_res_vec), 2)]
+ok_inter_var = llo_ok_res_vec[seq(2, length(llo_ok_res_vec), 2)]
+d$ok_inter_pred = ok_inter_pred
+d$ok_inter_var = ok_inter_var
+##
+## End (llo-OK)
+####
+
+
+####
+## Cross validation
+## 
+
+# Create model function 
+RF_fun = function(formula, data){
+  RF_model = ranger::ranger(formula = formula, 
+                            data = data)
+  return(RF_model)
+}
+
+# Create prediction function
+RF_pred_fun = function(object, newdata){
+  RF_prediction = predict(object = object,
+                          data = newdata)
+  return(RF_prediction$predictions)
+}
+
+# Perform the spatial cross-validation
+# Future for parallelization
+future::plan(future.callr::callr, workers = 10)
+sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d, coords = c("x","y"), 
+                                  model_fun = RF_fun, 
+                                  pred_fun = RF_pred_fun,
+                                  smp_fun = partition_loo, 
+                                  smp_args = list(buffer = m_m_pd$med_predDist))
+
+# Get test RMSE
+test_RMSE = sp_cv_RF$error_rep$test_rmse
+test_RMSE
+##
+## End (cross validation)
+#### 
+################################################################################
+## End (Random Forest (RF) spatial leave one out cross validation) 
+################################################################################
+
+################################################################################
+## Test area
+################################################################################
+
+####
+## Explore the relationship between buffer distance and RMSE
+##
+
+# Start time measurement
+start_time = Sys.time()
+
+# Setup backend to use many processors
+totalCores = parallel::detectCores()
+
+# Leave two cores to reduce computer load
+cluster = parallel::makeCluster(totalCores[1]-2) 
+doParallel::registerDoParallel(cluster)
+
+# explore
+test = data.frame(seq(0, 20000, 1000))
+
+test2 = foreach (i = iter(test, by="row"), .combine=c, 
+                 .packages = c("sperrorest", "ranger")) %dopar%{
+ 
+                   
+                   test_RMSE = sp_cv_RF$error_rep$test_rmse
+                 }
+
+plot(test2~test[ ,1])
+
+# Stop cluster
+stopCluster(cluster)
+
+# End time measurement
+end_time = Sys.time()
+print("bygone time")
+print(end_time - start_time)
+##
+## End (explore the relationship between buffer distance and RMSE)
+####
+################################################################################
+## End (test area)
+################################################################################

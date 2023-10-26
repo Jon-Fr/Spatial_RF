@@ -42,7 +42,7 @@ terra::writeVector(spv_dp, "data_points.gpkg")
 ##
 
 # Load test area file
-test_area = terra::vect("test_area.gpkg")
+test_area = terra::vect("test_area_small.gpkg")
 
 # Clip training data points
 subset_dp = terra::crop(spv_dp, test_area)
@@ -51,7 +51,7 @@ subset_dp = terra::crop(spv_dp, test_area)
 subset_dp = as.data.frame(subset_dp, geom = "XY")
 
 # Save the subset with the formula
-save(subset_dp, fo, file = "data_points_subset.rda")
+save(subset_dp, fo, file = "data_points_subset2.rda")
 ##
 ## End (subset training data for testing)
 #### 

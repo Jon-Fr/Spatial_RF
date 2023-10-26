@@ -26,3 +26,23 @@
 
 # Fit and compare Gaussian linear and nonlinear mixed-effects models.
 (nlme)
+
+# Enhances R’s functional programming (FP) toolkit by providing a complete and 
+# consistent set of tools for working with functions and vectors.
+(purrr)
+
+# Support for Parallel computation in R
+(parallel)
+
+# Foreach parallel adaptor for the 'parallel' package
+(doParallel)
+
+# Foreach is an idiom that allows for iterating over elements in a collection, 
+# without the use of an explicit loop counter. 
+(foreach)
+
+# Spatio-temporal geostatistical mapping of data. 
+# Random Forest Spatial Interpolation (RFSI)
+# Sometimes it is necessary to install this package using devtools
+library(devtools)
+install_github("https://github.com/AleksandarSekulic/Rmeteo")

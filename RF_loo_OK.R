@@ -11,6 +11,7 @@ p_load("purrr")
 p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
+p_load("future")
 
 p_load("ranger")
 p_load("gstat")       
@@ -28,12 +29,12 @@ options(digits=4)
 load("data_points_subset.rda")
 d = subset_dp
 
-# Simplified formula for testing
+# Simplified formula for testing 
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  ok_inter_pred + ok_inter_var)
+                  ok_inter_pred + ok_inter_var+ x + y)
 
 ####
 ## Model argument preparation
@@ -72,18 +73,18 @@ m_m_pd = mean_med_predDist(path_predArea = "test_area.gpkg", dataPoints_df = d,
 ####
 
 ####
-## llo-OK
+## llo-OK multicore function
 ##
 llo_OK_fun = function(data, buffer_dist, ok_fo){
   # Leave one out resampling
-  resamp = partition_loo(data = data, ndisc = nrow(data), replace = FALSE, 
-                         coords = c("x","y"), buffer = buffer_dist, 
-                         repetition = 1)
+  resamp = sperrorest::partition_loo(data = data, ndisc = nrow(data), 
+                                     replace = FALSE, coords = c("x","y"), 
+                                     buffer = buffer_dist, repetition = 1)
   # Create a spatial points df 
   sp_df = sp::SpatialPointsDataFrame(coords = data[,c("x","y")], data = data)
   # Foreach for parallel processing
-  ok_i_p = foreach (i = 1:nrow(sp_df),
-                    .packages = c("gstat", "automap", "sp")) %dopar%{
+  ok_i_p = foreach::foreach(i = 1:nrow(sp_df),
+                            .packages = c("gstat", "automap", "sp")) %dopar%{
                       # Get training and test ids
                       id_train = resamp[["1"]][[i]]$train
                       id_test = resamp[["1"]][[i]]$test
@@ -93,7 +94,7 @@ llo_OK_fun = function(data, buffer_dist, ok_fo){
                       test_sp_df = sp_df[id_test, ]
                       
                       # Fit spherical variogram model
-                      resid_vm = autofitVariogram(formula = ok_fo, 
+                      resid_vm = automap::autofitVariogram(formula = ok_fo, 
                                                   input_data = train_sp_df, 
                                                   model = c("Sph"),
                                                   cressie = TRUE)
@@ -101,25 +102,26 @@ llo_OK_fun = function(data, buffer_dist, ok_fo){
                       resid_vmm = resid_vm["var_model"]$var_model
                       
                       # Interpolation
-                      ok_pred = krige(ok_fo, train_sp_df, 
-                                      model = resid_vmm, newdata = test_sp_df,
-                                      debug.level = 0)
+                      ok_pred = gstat::krige(ok_fo, train_sp_df, 
+                                             model = resid_vmm, 
+                                             newdata = test_sp_df,
+                                             debug.level = 0)
                       pred = c(ok_pred$var1.pred, ok_pred$var1.var)
                     }
   
 }
 
 # Setup backend to use many processors
-totalCores = detectCores()
+totalCores = parallel::detectCores()
 
 # Leave two cores to reduce computer load
-cluster = makeCluster(totalCores[1]-2) 
-registerDoParallel(cluster)
+cluster = parallel::makeCluster(totalCores[1]-5) 
+doParallel::registerDoParallel(cluster)
 
-# Exectute OK function
+# Exectute llo-OK function
 llo_ok_res = llo_OK_fun(data = d, 
-                          buffer_dist = m_m_pd$med_predDist, 
-                          ok_fo = ok_fo) 
+                        buffer_dist = m_m_pd$med_predDist, 
+                        ok_fo = ok_fo) 
 
 # Stop cluster
 stopCluster(cluster)
@@ -131,7 +133,7 @@ ok_inter_var = llo_ok_res_vec[seq(2, length(llo_ok_res_vec), 2)]
 d$ok_inter_pred = ok_inter_pred
 d$ok_inter_var = ok_inter_var
 ##
-## End (llo-OK)
+## End (llo-OK multicore function)
 ####
 
 
@@ -169,8 +171,114 @@ test_RMSE
 ## End (cross validation)
 #### 
 ################################################################################
-## End (Random Forest (RF) spatial leave one out cross validation) 
+## End (RF-llo-OK spatial leave one out cross validation) 
 ################################################################################
+
+
+################################################################################
+## Spatial prediction error profile (SPEP) and 
+# spatial variable importance profile (SVIP) (Brenning 2022) 
+################################################################################
+
+####
+## llo-OK function
+##
+llo_OK_fun = function(data, buffer_dist, ok_fo){
+  # Leave one out resampling
+  resamp = sperrorest::partition_loo(data = data, ndisc = nrow(data), 
+                                     replace = FALSE, coords = c("x","y"), 
+                                     buffer = buffer_dist, repetition = 1)
+  # Create a spatial points df 
+  sp_df = sp::SpatialPointsDataFrame(coords = data[,c("x","y")], data = data)
+  # Create vectors for storing the results
+  res_pred = c()
+  res_var = c()
+  # For loop
+  for (i in 1:nrow(sp_df)){
+    # Get training and test ids
+    id_train = resamp[["1"]][[i]]$train
+    id_test = resamp[["1"]][[i]]$test
+    
+    # Get a training and test spatial points df 
+    train_sp_df = sp_df[id_train, ]
+    test_sp_df = sp_df[id_test, ]
+    
+    # Fit spherical variogram model
+    resid_vm = automap::autofitVariogram(formula = ok_fo, 
+                                         input_data = train_sp_df, 
+                                         model = c("Sph"),
+                                         cressie = TRUE)
+    # Get the model
+    resid_vmm = resid_vm["var_model"]$var_model
+    
+    # Interpolation
+    ok_pred = gstat::krige(ok_fo, train_sp_df, model = resid_vmm, 
+                           newdata = test_sp_df, debug.level = 0)
+    pred = c(ok_pred$var1.pred, ok_pred$var1.var)
+    # Add results to result vectors
+    res_pred = append(res_pred, ok_pred$var1.pred)
+    res_var = append(res_var, ok_pred$var1.var)
+  }
+  # Add results to df 
+  data$ok_inter_pred = res_pred
+  data$ok_inter_var = res_var
+  return(data)
+}
+
+# Test llo-OK function
+#llo_ok_res = llo_OK_fun(data = d, 
+#                        buffer_dist = 1000, 
+#                        ok_fo = ok_fo) 
+##
+## End (llo-OK function)
+####
+
+
+####
+## Cross validation
+## 
+
+# Create model function 
+RF_fun = function(formula, data){
+  # Create RF model
+  RF_model = ranger::ranger(formula = formula, 
+                            data = data)
+  # Return training data and RF_model
+  r_l = list("model" = RF_model, "train_data" = data)
+  return(r_l)
+}
+
+# Create prediction function
+RF_pred_fun = function(object, newdata, ok_fo){
+  # Perform Ordinary kriging interpolation for the newdata point
+  # Create spdfs
+  train_data = object$train_data
+  train_sp_df = sp::SpatialPointsDataFrame(coords = train_data[,c("x","y")], 
+                                     data = train_data)
+  sp_df = sp::SpatialPointsDataFrame(coords = newdata[,c("x","y")], 
+                                     data = newdata)
+  # Fit spherical variogram model
+  resid_vm = automap::autofitVariogram(formula = ok_fo, 
+                                       input_data = train_sp_df, 
+                                       model = c("Sph"),
+                                       cressie = TRUE)
+  # Get the model
+  resid_vmm = resid_vm["var_model"]$var_model
+  # Interpolation
+  ok_pred = gstat::krige(ok_fo, train_sp_df, 
+                         model = resid_vmm, newdata = sp_df, debug.level = 0)
+  # Add the prediction and the variance to newdata
+  newdata$ok_inter_pred = ok_pred$var1.pred
+  newdata$ok_inter_var = ok_pred$var1.var  
+  #  Perform RF prediction
+  RF_prediction = predict(object = object$model,
+                          data = newdata)
+  return(RF_prediction$predictions)
+}
+################################################################################
+## End (SPEP and SVIP)
+################################################################################
+
 
 ################################################################################
 ## Test area
@@ -193,8 +301,8 @@ doParallel::registerDoParallel(cluster)
 # explore
 test = data.frame(seq(0, 20000, 1000))
 
-test2 = foreach (i = iter(test, by="row"), .combine=c, 
-                 .packages = c("sperrorest", "ranger")) %dopar%{
+test2 = foreach::foreach(i = iter(test, by="row"), .combine=c, 
+                         .packages = c("sperrorest", "ranger")) %dopar%{
  
                    
                    test_RMSE = sp_cv_RF$error_rep$test_rmse
@@ -215,3 +323,6 @@ print(end_time - start_time)
 ################################################################################
 ## End (test area)
 ################################################################################
+
+
+

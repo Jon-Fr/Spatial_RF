@@ -11,6 +11,7 @@ p_load("purrr")
 p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
+p_load("future")
 
 p_load("ranger")
 p_load("gstat")       
@@ -31,7 +32,7 @@ d = subset_dp
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung)
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y)
 
 ####
 ## Model argument preparation
@@ -48,15 +49,15 @@ obs_col = "bcNitrate"
 
 
 ################################################################################
-## Random Forest residual Kriging (RFRK) prediction 
+## Random Forest with Ordinary Kriging of the residuals (RFOK) prediction 
 ################################################################################
 ################################################################################
-## End (Random Forest residual Kriging (RFRK) prediction) 
+## End (RFOK prediction) 
 ################################################################################
 
 
 ################################################################################
-## RFRK spatial leave one out cross validation 
+## RFOK spatial leave one out cross validation 
 ################################################################################
 #####
 ## Get the mean and median prediction distance 
@@ -84,7 +85,12 @@ RF_fun = function(formula, data){
 }
 
 # Create prediction function
-RFRK_pred_fun = function(object, newdata, obs_col){
+RFOK_pred_fun = function(object, newdata, obs_col){
+  # Make the RF prediction
+  RF_prediction = predict(object = object$model,
+                          data = newdata)
+  # Add the RF prediction to the df
+  newdata$RF_predictions = RF_prediction$predictions
   # Get training data
   train_data = object$train_data
   # Get the RF prediction and residuals
@@ -101,11 +107,6 @@ RFRK_pred_fun = function(object, newdata, obs_col){
                                        model = c("Sph"))
   # Get the model
   resid_vmm = resid_vm["var_model"]$var_model
-  # Make the RF prediction
-  RF_prediction = predict(object = object$model,
-                          data = newdata)
-  # Add the RF prediction to the df
-  newdata$RF_predictions = RF_prediction$predictions
   # Create a spatial points df 
   newdata_sp_df = sp::SpatialPointsDataFrame(newdata[,c("x","y")], newdata)
   # Ordinary Kriging residual interpolation
@@ -122,21 +123,21 @@ RFRK_pred_fun = function(object, newdata, obs_col){
 # Perform the spatial cross-validation
 # Future for parallelization
 future::plan(future.callr::callr, workers = 10)
-sp_cv_RFRK = sperrorest::sperrorest(formula = fo, data = d, coords = c("x","y"), 
+sp_cv_RFOK = sperrorest::sperrorest(formula = fo, data = d, coords = c("x","y"), 
                                     model_fun = RF_fun, 
-                                    pred_fun = RFRK_pred_fun,
+                                    pred_fun = RFOK_pred_fun,
                                     pred_args = list(obs_col=obs_col),
                                     smp_fun = partition_loo, 
                                     smp_args = list(buffer=m_m_pd$med_predDist))
 
 # Get test RMSE
-test_RMSE = sp_cv_RFRK$error_rep$test_rmse
+test_RMSE = sp_cv_RFOK$error_rep$test_rmse
 test_RMSE
 ##
 ## End (cross validation)
 #### 
 ################################################################################
-## End (Random Forest (RF) spatial leave one out cross validation) 
+## End (RFOK spatial leave one out cross validation) 
 ################################################################################
 
 
@@ -161,7 +162,7 @@ doParallel::registerDoParallel(cluster)
 # explore
 test = data.frame(seq(0, 20000, 1000))
 
-test2 = foreach (i = iter(test, by="row"), .combine=c, 
+test2 = foreach::foreach(i = iter(test, by="row"), .combine=c, 
                  .packages = c("sperrorest", "ranger", "sp", "automap", 
                                "gstat")) %dopar%{
   sp_cv_RFRK = sperrorest::sperrorest(formula = fo, data = d, 

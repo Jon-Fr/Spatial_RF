@@ -46,3 +46,7 @@
 # Sometimes it is necessary to install this package using devtools
 library(devtools)
 install_github("https://github.com/AleksandarSekulic/Rmeteo")
+
+# Fits non-linear regression models on dependent data with Generalized Least 
+# Square (GLS) based Random Forest (RF-GLS)
+(RandomForestsGLS)

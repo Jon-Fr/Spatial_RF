@@ -11,6 +11,7 @@ p_load("purrr")
 p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
+p_load("future")
 
 p_load("dplyr")
 
@@ -120,12 +121,12 @@ print(plot(resid_v_gls, pl = TRUE, model = resid_vmf_gls_au))
 ## End (create variogram model for the UK interpolation (the automatized way))
 ####
 ################################################################################
-## End (Universal Kriging (UK) prediction/interpolation)
+## End (UK prediction/interpolation)
 ################################################################################
 
 
 ################################################################################
-## Universal Kriging (UK) spatial leave one out cross validation 
+## UK spatial leave one out cross validation 
 ################################################################################
 
 #####
@@ -180,7 +181,7 @@ UK_pred_fun = function(object, newdata, formula){
 
 # Perform the spatial cross-validation
 # Future for parallelization
-#future::plan(future.callr::callr, workers = 5)
+#future::plan(future.callr::callr, workers = 10)
 sp_cv_UK = sperrorest::sperrorest(formula = fo, data = d, coords = c("x","y"), 
                                   model_fun = vmf_fun, 
                                   pred_fun = UK_pred_fun,
@@ -195,7 +196,7 @@ test_RMSE
 ## End (cross validation)
 ####
 ################################################################################
-## End (Universal Kriging (UK) spatial leave one out cross validation)
+## End UK spatial leave one out cross validation)
 ################################################################################
 
 
@@ -245,13 +246,13 @@ UK_pred_fun = function(object, newdata, formula){
 
 # Arguments for partition_discs2
 smp_args = list(maxdist = 20000, 
-                 repetition = 200, 
+                 repetition = 16000, 
                  seed1 = 123)
 
 # Perform spatial leave one out cross validation with random buffer distance 
 # between 0 and maxdist
 # Future for parallelization
-#future::plan(future.callr::callr, workers = 5)
+#future::plan(future.callr::callr, workers = 10)
 SPEP_UK = sperrorest(formula = fo, data = d, coords = c("x","y"), 
                      model_fun = vmf_fun, 
                      pred_fun = UK_pred_fun,
@@ -297,54 +298,6 @@ plot(rmse[[1]]$dist, rmse[[1]]$smth_rmse, type = "l", xlab = "distance",
      ylab = paste(nm, "RMSE"), main = nm); abline(h = 0)
 ##
 ## End (plot (standard) SPEP) 
-####
-
-
-####
-## Plot SPEP (based on false positives and false negatives) 
-##
-
-obspreddist <- function(x, type = "test", decision_threshold) {
-  if (is.atomic(x)) {
-    return(list(obs = logical(), pred = logical(), dist = numeric()))
-  } else if (is.null(names(x[[type]]))) {
-    return(list(obs = logical(), pred = logical(), dist = numeric()))
-  } else {
-    return(list(obs = x[[type]]$obs > decision_threshold, 
-                pred = x[[type]]$pred > decision_threshold, 
-                numobs = x[[type]]$obs,
-                numpred = x[[type]]$pred,
-                numerr = x[[type]]$bias,
-                dist = x$distance))
-  }
-}
-
-obspreddists <- function(x, ...) x %>% map(obspreddist, ...) %>% dplyr::bind_rows() %>% as.data.frame()
-
-extract_obspreds <- function(res, type = "test", decision_threshold = threshold) {
-  RES <- res$error_fold %>% map(obspreddists, type = type, decision_threshold = decision_threshold) %>% dplyr::bind_rows()
-  RES$fp <- RES$pred & !RES$obs
-  RES$fn <- RES$obs & !RES$pred
-  RES$acc <- RES$obs == RES$pred
-  RES$err <- RES$pred - RES$obs
-  RES
-}
-
-# Spatial leave-one-out RMSE:
-ed <- lapply(res, extract_obspreds)
-
-# Compute smoothed prediction error profiles:
-brk <- seq(300, 0.95*MAXDIST, length = 30)
-errs <- lapply(ed, function(x) smth(means0(x, breaks = brk, 
-                                           which = c("acc", "err", "fp", "fn"))))
-
-nm <- "1"
-# hist(ed[[nm]]$numerr, br = 200, main = nm)
-# qqnorm((ed[[nm]]$numerr - mean(ed[[nm]]$numerr)) / sd(ed[[nm]]$numerr)); abline(c(0,1))
-plot(errs[[nm]]$dist, errs[[nm]]$smth_err, type = "l", xlab = "distance", 
-     ylab = paste(nm, "error"), main = nm); abline(h = 0)
-##
-## End (plot SPEP (based on false positives and false negatives))
 ####
 
 
@@ -442,7 +395,7 @@ doParallel::registerDoParallel(cluster)
 # explore
 test = data.frame(seq(0, 20000, 1000))
 
-test2 = foreach (i = iter(test, by="row"), .combine=c, 
+test2 = foreach::foreach(i = iter(test, by="row"), .combine=c, 
                  .packages = c("sperrorest", "sp", "automap", "gstat")) %dopar%{
   sp_cv_UK = sperrorest::sperrorest(formula = fo, data = d, coords = c("x","y"), 
                                     model_fun = vmf_fun, 

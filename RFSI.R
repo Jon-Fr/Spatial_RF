@@ -1,5 +1,3 @@
-# Spatial leave one out cross validation is not working
-
 ################################################################################
 ## Preparation (strictly necessary)
 ################################################################################
@@ -13,6 +11,7 @@ p_load("purrr")
 p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
+p_load("future")
 
 p_load("meteo")
 
@@ -31,7 +30,7 @@ d = subset_dp
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung)
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y)
 
 ####
 ## Data and model argument preparation
@@ -61,7 +60,7 @@ d.staid.x.y.z = c("id","x","y",NA)
 ## Random Forest spatial interpolation (RFSI) prediction 
 ################################################################################
 ################################################################################
-## End (Random Forest spatial interpolation (RFSI) prediction) 
+## End (RFSI prediction) 
 ################################################################################
 
 
@@ -94,7 +93,7 @@ RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s){
                       n.obs = 5, # number of nearest observations
                       progress = FALSE,
                       # ranger parameters
-                      num.trees = 500)
+                      num.trees = 100)
   # Return model and training data
   return_list = list(model = RFSI_model, train_data = data)
   return(return_list)
@@ -168,7 +167,7 @@ doParallel::registerDoParallel(cluster)
 # explore
 test = data.frame(seq(0, 20000, 1000))
 
-test2 = foreach (i = iter(test, by="row"), .combine=c, 
+test2 = foreach::foreach (i = iter(test, by="row"), .combine=c, 
                  .packages = c("sperrorest", "meteo")) %dopar%{
 
                  }
@@ -185,14 +184,6 @@ print(end_time - start_time)
 ##
 ## End (explore the relationship between buffer distance and RMSE)
 ####
-
-
-
-test_set = d[ 1:2, ]
-train_set = d[ 3:758 , ]
-
-o = RFSI_fun(fo,train_set,d.staid.x.y.z,c_r_s)
-r = RFSI_pred_fun(o,test_set,d.staid.x.y.z,obs_col=obs_col,c_r_s=c_r_s)
 ################################################################################
 ## End (test area)
 ################################################################################

@@ -11,6 +11,7 @@ p_load("purrr")
 p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
+p_load("future")
 
 p_load("ranger")
 p_load("gstat")       
@@ -32,7 +33,7 @@ d = subset_dp
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung)
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y)
 
 ####
 ## Model argument preparation
@@ -57,7 +58,7 @@ ok_fo = as.formula(bcNitrate ~ 1)
 
 
 ################################################################################
-## Random Forest (RF) spatial leave one out cross validation 
+## OK-RF spatial leave one out cross validation 
 ################################################################################
 #####
 ## Get the mean and median prediction distance 
@@ -146,7 +147,7 @@ test_RMSE
 ## End (cross validation)
 #### 
 ################################################################################
-## End (Random Forest (RF) spatial leave one out cross validation) 
+## End (OK-RF spatial leave one out cross validation) 
 ################################################################################
 
 
@@ -171,7 +172,7 @@ doParallel::registerDoParallel(cluster)
 # explore
 test = data.frame(seq(0, 20000, 1000))
 
-test2 = foreach (i = iter(test, by="row"), .combine=c, 
+test2 = foreach::foreach (i = iter(test, by="row"), .combine=c, 
                  .packages = c("sperrorest", "ranger", "sp", "automap", 
                                "gstat")) %dopar%{
   sp_cv_OK_RF = sperrorest::sperrorest(formula = fo, data = d, 

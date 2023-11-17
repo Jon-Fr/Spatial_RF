@@ -11,6 +11,7 @@ p_load("purrr")
 p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
+p_load("future")
 
 p_load("ranger")
 library(landmap)
@@ -70,7 +71,7 @@ layer_names = paste(names(dist_layers), collapse="+")
 fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
                   elevation + cAckerland + log10_gwn + agrum_log10_restime + 
                   Ackerland + lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung +"
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y"
 
 # Complete the model formula
 fo = as.formula(paste(fo_firstPart, layer_names))
@@ -89,16 +90,16 @@ final_d = cbind(d, ov_dp_dl)
 
 
 ################################################################################
-## Random Forest with distance matrix columns as explanatory variables (RF-DMC) 
-## prediction 
+## Random Forest for spatial data (RFsp) (with distance matrix columns as 
+## explanatory variables) prediction 
 ################################################################################
 ################################################################################
-## End (RF-DMC) prediction)
+## End (RFsp) prediction)
 ################################################################################
 
 
 ################################################################################
-## RF-DMC spatial leave one out cross validation 
+## RFsp spatial leave one out cross validation 
 ################################################################################
 #####
 ## Get the mean and median prediction distance 
@@ -155,7 +156,7 @@ test_RMSE
 ## End (cross validation)
 #### 
 ################################################################################
-## End (RF-DMC spatial leave one out cross validation) 
+## End (RFsp spatial leave one out cross validation) 
 ################################################################################
 
 
@@ -180,7 +181,7 @@ doParallel::registerDoParallel(cluster)
 # explore
 test = data.frame(seq(0, 20000, 1000))
 
-test2 = foreach (i = iter(test, by="row"), .combine=c, 
+test2 = foreach::foreach(i = iter(test, by="row"), .combine=c, 
                  .packages = c("sperrorest", "ranger")) %dopar%{
   sp_cv_RF_DMC = sperrorest::sperrorest(formula = fo, data = final_d, 
                                         coords = c("x","y"), 

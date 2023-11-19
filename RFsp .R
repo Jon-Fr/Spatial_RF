@@ -24,7 +24,7 @@ source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 options(digits=4)
 
 # Load data and formula (for now use a subset)
-load("data_points_subset2.rda")
+load("data_points_subset.rda")
 d = subset_dp
 
 ####
@@ -38,10 +38,10 @@ d$id = paste("layer.",1:nrow(d), sep = "")
 sp_df = sp::SpatialPointsDataFrame(d[,c("x","y")], d)
 
 # Load prediction area (for now use the test area as prediction area)
-pred_area = terra::vect("test_area_small.gpkg")
+pred_area = terra::vect("test_area.gpkg")
 
 # Create raster with same extent as the prediction area
-raster_pl = terra::rast(pred_area, resolution = 100,
+raster_pl = terra::rast(pred_area, resolution = 1000,
                         xmin = xmin(pred_area), xmax = xmax(pred_area), 
                         ymin = ymin(pred_area), ymax = ymax(pred_area))
 
@@ -71,7 +71,7 @@ layer_names = paste(names(dist_layers), collapse="+")
 fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
                   elevation + cAckerland + log10_gwn + agrum_log10_restime + 
                   Ackerland + lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y"
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y +"
 
 # Complete the model formula
 fo = as.formula(paste(fo_firstPart, layer_names))
@@ -106,7 +106,7 @@ final_d = cbind(d, ov_dp_dl)
 ## (for now use the test area as prediction area)
 ##
 
-m_m_pd = mean_med_predDist(path_predArea = "test_area_small.gpkg", 
+m_m_pd = mean_med_predDist(path_predArea = "test_area.gpkg", 
                            dataPoints_df = d, c_r_s = "EPSG:25832")
 ##
 ## End (get the mean and median prediction distance)
@@ -118,7 +118,7 @@ m_m_pd = mean_med_predDist(path_predArea = "test_area_small.gpkg",
 ## 
 
 # Create model function 
-RF_DMC_fun = function(formula, data, fo_firstPart){
+RFsp_fun = function(formula, data, fo_firstPart){
   # Set first part of the model formula (simplified for testing)
   fo_firstPart = fo_firstPart
   # Set the second part of the model formula
@@ -132,7 +132,7 @@ RF_DMC_fun = function(formula, data, fo_firstPart){
 }
 
 # Create prediction function
-RF_DMC_pred_fun = function(object, newdata){
+RFsp_pred_fun = function(object, newdata){
   RF_dcm_prediction = predict(object = object, 
                               data = newdata)
   return(RF_dcm_prediction$predictions)
@@ -140,17 +140,17 @@ RF_DMC_pred_fun = function(object, newdata){
 
 # Perform the spatial cross-validation
 # Future for parallelization
-future::plan(future.callr::callr, workers = 10)
-sp_cv_RF_DMC = sperrorest::sperrorest(formula = fo, data = final_d, 
+#future::plan(future.callr::callr, workers = 10)
+sp_cv_RFsp = sperrorest::sperrorest(formula = fo, data = final_d, 
                                   coords = c("x","y"), 
-                                  model_fun = RF_DMC_fun,
+                                  model_fun = RFsp_fun,
                                   model_args = list(fo_firstPart=fo_firstPart),
-                                  pred_fun = RF_DMC_pred_fun,
+                                  pred_fun = RFsp_pred_fun,
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = m_m_pd$med_predDist))
 
 # Get test RMSE
-test_RMSE = sp_cv_RF_DMC$error_rep$test_rmse
+test_RMSE = sp_cv_RFsp$error_rep$test_rmse
 test_RMSE
 ##
 ## End (cross validation)

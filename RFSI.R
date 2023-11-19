@@ -90,10 +90,10 @@ RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s){
                       data = data,
                       s.crs = c_r_s,
                       data.staid.x.y.z = data.staid.x.y.z,
-                      n.obs = 5, # number of nearest observations
+                      n.obs = 10, # number of nearest observations
                       progress = FALSE,
                       # ranger parameters
-                      num.trees = 100)
+                      num.trees = 500)
   # Return model and training data
   return_list = list(model = RFSI_model, train_data = data)
   return(return_list)

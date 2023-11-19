@@ -48,5 +48,8 @@ library(devtools)
 install_github("https://github.com/AleksandarSekulic/Rmeteo")
 
 # Fits non-linear regression models on dependent data with Generalized Least 
-# Square (GLS) based Random Forest (RF-GLS)
+# Square (GLS) based Random Forest (RF-GLS).
 (RandomForestsGLS)
+
+# Fast spatial regression using Moran eigenvectors
+(spmoran)

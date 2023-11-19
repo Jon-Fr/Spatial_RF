@@ -27,8 +27,11 @@ options(digits=4)
 load("data_points_subset.rda")
 d = subset_dp
 
-# Dummy formula 
-fo = as.formula(x ~ y)
+# Simplified formula for testing
+fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                  cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
+                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y)
 
 # Set first part of the model formula (simplified for testing)
 fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
@@ -94,10 +97,10 @@ RF_MEv_pred_fun = function(object, newdata){
   # Create matrix of spatial point coordinates 
   coord_m = cbind(newdata$x, newdata$y)
   # Calculate Moran eigenvectors and eigenvalues
-  MEvEv = spmoran::meigen0(meig = object$MEvEv, coords0 = coord_m)
+  MEvEv_n = spmoran::meigen0(meig = object$MEvEv, coords0 = coord_m)
   # Store eigenvectors in a df and combine it with the newdata df
-  Evec_df = as.data.frame(MEvEv$sf)
-  c_newdata = cbind(newdata, Evec_df)
+  Evec_ndf = as.data.frame(MEvEv_n$sf)
+  c_newdata = cbind(newdata, Evec_ndf)
   # RF prediction
   RF_prediction = predict(object = object$model,
                           data = c_newdata)
@@ -107,7 +110,7 @@ RF_MEv_pred_fun = function(object, newdata){
 # Perform the spatial cross-validation
 # Future for parallelization
 #future::plan(future.callr::callr, workers = 10)
-sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo, data = d[1:300,], 
+sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo, data = d, 
                                       coords = c("x","y"), 
                                       model_fun = RF_MEv_fun,
                                       model_args = list(fo_fp = fo_firstPart),
@@ -118,7 +121,6 @@ sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo, data = d[1:300,],
 # Get test RMSE
 test_RMSE = sp_cv_RF_MEv$error_rep$test_rmse
 test_RMSE
-
 ##
 ## End (cross validation)
 #### 
@@ -126,11 +128,17 @@ test_RMSE
 ## End (RF-MEv spatial leave one out cross validation) 
 ################################################################################
 
+
+
+################################################################################
+## Test area
+################################################################################
+
 # Start time measurement
 start_time = Sys.time()
 print(start_time)
 
-test = RF_MEv_fun(formula = fo, data = d[3:758, ], fo_fp = fo_firstPart)
+test = RF_MEv_fun(formula = fo, data = d[3:300, ], fo_fp = fo_firstPart)
 test1 = RF_MEv_pred_fun(object = test, newdata = d[1,])
 
 d[1, "bcNitrate"]
@@ -139,3 +147,6 @@ d[1, "bcNitrate"]
 end_time = Sys.time()
 print("bygone time")
 print(end_time - start_time)
+################################################################################
+## End (test area)
+################################################################################

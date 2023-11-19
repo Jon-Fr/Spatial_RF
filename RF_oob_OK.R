@@ -81,7 +81,7 @@ RF_fun = function(formula, data, obs_col){
   # Create RF model
   RF_model = ranger::ranger(formula = formula, 
                             data = data)
-  # Calculate the oob residuals and ad the to the df
+  # Calculate the oob residuals and add them to the df
   data$oob_resi = data[, obs_col] - RF_model$predictions
   # Return RF model and training data
   return_list = list(model = RF_model, train_data = data)

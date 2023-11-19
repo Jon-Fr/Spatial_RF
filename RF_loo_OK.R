@@ -34,7 +34,7 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  ok_inter_pred + ok_inter_var+ x + y)
+                  ok_inter_pred + ok_inter_var + x + y)
 
 ####
 ## Model argument preparation

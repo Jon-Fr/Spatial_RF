@@ -125,8 +125,8 @@ test2 = foreach::foreach(i = iter(test, by="row"), .combine=c,
                                     pred_fun = RF_pred_fun,
                                     smp_fun = partition_loo,
                                     smp_args = list(buffer = i),
-                                    mode_rep = "loop", 
-                                    mode_fold = "loop")
+                                    mode_rep = "sequential", 
+                                    mode_fold = "sequential")
   
   test_RMSE = sp_cv_RF$error_rep$test_rmse
   }

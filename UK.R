@@ -34,7 +34,7 @@ d = subset_dp
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung)
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + x + y)
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -103,7 +103,7 @@ n_t_s
 # Plot result 
 # Prepare the correlogram for the 
 # generalized least square regression (GLS) model
-autocor = nlme::corSpher(c(range, n_t_s), nugget=TRUE, fixed=TRUE)
+autocor = nlme::corSpher (c(range, n_t_s), nugget=TRUE, fixed=TRUE)
 autocor = nlme::Initialize(autocor, data = sp_df)
 autocor
 

@@ -149,41 +149,6 @@ test_RMSE
 ################################################################################
 ## Test area
 ################################################################################
-
-####
-## Explore the relationship between buffer distance and RMSE
-##
-
-# Start time measurement
-start_time = Sys.time()
-
-# Setup backend to use many processors
-totalCores = parallel::detectCores()
-
-# Leave two cores to reduce computer load
-cluster = parallel::makeCluster(totalCores[1]-2) 
-doParallel::registerDoParallel(cluster)
-
-# explore
-test = data.frame(seq(0, 20000, 1000))
-
-test2 = foreach::foreach (i = iter(test, by="row"), .combine=c, 
-                 .packages = c("sperrorest", "meteo")) %dopar%{
-
-                 }
-
-plot(test2~test[ ,1])
-
-# Stop cluster
-stopCluster(cluster)
-
-# End time measurement
-end_time = Sys.time()
-print("bygone time")
-print(end_time - start_time)
-##
-## End (explore the relationship between buffer distance and RMSE)
-####
 ################################################################################
 ## End (test area)
 ################################################################################

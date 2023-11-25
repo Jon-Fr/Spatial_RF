@@ -192,7 +192,7 @@ test2 = foreach::foreach (i = iter(test, by="row"), .combine=c,
 plot(test2~test[ ,1])
 
 # Stop cluster
-stopCluster(cluster)
+parallel::stopCluster(cluster)
 
 # End time measurement
 end_time = Sys.time()

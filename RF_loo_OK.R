@@ -179,6 +179,16 @@ test_RMSE
 ## Spatial prediction error profile (SPEP) and 
 # spatial variable importance profile (SVIP) (Brenning 2022) 
 ################################################################################
+#####
+## Get the mean and median prediction distance 
+## (for now use the test area as prediction area)
+##
+
+m_m_pd = mean_med_predDist(path_predArea = "test_area.gpkg", dataPoints_df = d,
+                           c_r_s = "EPSG:25832")
+##
+## End (get the mean and median prediction distance)
+####
 
 ####
 ## llo-OK function
@@ -239,7 +249,9 @@ llo_OK_fun = function(data, buffer_dist, ok_fo){
 ## 
 
 # Create model function 
-RF_fun = function(formula, data){
+RF_fun = function(formula, data, buffer_dist, ok_fo){
+  # loo OK
+  data = llo_OK_fun(data = data, buffer_dist = buffer_dist, ok_fo = ok_fo)
   # Create RF model
   RF_model = ranger::ranger(formula = formula, 
                             data = data)
@@ -283,43 +295,6 @@ RF_pred_fun = function(object, newdata, ok_fo){
 ################################################################################
 ## Test area
 ################################################################################
-
-####
-## Explore the relationship between buffer distance and RMSE
-##
-
-# Start time measurement
-start_time = Sys.time()
-
-# Setup backend to use many processors
-totalCores = parallel::detectCores()
-
-# Leave two cores to reduce computer load
-cluster = parallel::makeCluster(totalCores[1]-2) 
-doParallel::registerDoParallel(cluster)
-
-# explore
-test = data.frame(seq(0, 20000, 1000))
-
-test2 = foreach::foreach(i = iter(test, by="row"), .combine=c, 
-                         .packages = c("sperrorest", "ranger")) %dopar%{
- 
-                   
-                   test_RMSE = sp_cv_RF$error_rep$test_rmse
-                 }
-
-plot(test2~test[ ,1])
-
-# Stop cluster
-stopCluster(cluster)
-
-# End time measurement
-end_time = Sys.time()
-print("bygone time")
-print(end_time - start_time)
-##
-## End (explore the relationship between buffer distance and RMSE)
-####
 ################################################################################
 ## End (test area)
 ################################################################################

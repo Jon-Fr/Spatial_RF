@@ -53,3 +53,6 @@ install_github("https://github.com/AleksandarSekulic/Rmeteo")
 
 # Fast spatial regression using Moran eigenvectors
 (spmoran)
+
+# Computes the concave polygon(s) for one or several set of points
+(concaveman)

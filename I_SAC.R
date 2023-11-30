@@ -23,8 +23,28 @@ source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula (for now use a subset)
-load("Data/NuM_L.rda")
-d = NuM_L
+load("Data/.rda")
+d = 
+  
+# Get information about the prediction distance 
+info_pd = info_predDist(path_predArea = "Data/.gpkg", 
+                          dataPoints_df = d,
+                          c_r_s = "EPSG:25832",
+                          resolution = 100,
+                          xy = c("X", "Y"))
+
+pd_df = info_pd$predDist_df
+hist(pd_df$lyr.1)
+third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
+tq_pd = third_quartile
+max_pd = info_pd$max_predDist
+mean_pd = info_pd$mean_predDist
+sd_pd = info_pd$sd_predDist
+med_pd = info_pd$med_predDist
+mad_pd = info_pd$mad_predDist
+
+# Create a spatial points df 
+sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)  
 
 # Adjusted formula
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
@@ -40,34 +60,6 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 ################################################################################
 ## Investigation of the spatial autocorrelation
 ################################################################################
-#### 
-## Preparation 
-##
-
-# Create a spatial points df 
-sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
-
-
-#Get information about the prediction distance 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_Gebiet.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
-
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = 46331
-max_pd = 135010
-mean_pd = 28075
-sd_pd = 30275
-med_pd = 14711
-mad_pd = 18508
-##
-## End (preparation )
-####
-
 
 ####
 ## Empirical semivariogram (EmSv) of the variable of interest

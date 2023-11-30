@@ -24,15 +24,31 @@ source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 options("scipen"= 999, "digits"=4)
 
 # Load data (for now use a subset)
-load("Data/")
-d = 
+load("Data/NuM_L_sub_4.rda")
+d = sub_subset
+
+# Get information about the prediction distance 
+info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_4_prediction_area.gpkg", 
+                        dataPoints_df = d,
+                        c_r_s = "EPSG:25832",
+                        resolution = 100,
+                        xy = c("X", "Y"))
+
+pd_df = info_pd$predDist_df
+hist(pd_df$lyr.1)
+third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
+tq_pd = third_quartile
+max_pd = info_pd$max_predDist
+mean_pd = info_pd$mean_predDist
+sd_pd = info_pd$sd_predDist
+med_pd = info_pd$med_predDist
+mad_pd = info_pd$mad_predDist
 
 # Adjusted formula 
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_13 + aea20_6 + X + Y)
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y)
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -49,28 +65,6 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 ################################################################################
 ## RF spatial leave one out cross validation 
 ################################################################################
-#####
-## Get information about the prediction distance 
-## 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_2_prediction_area.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
-
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = third_quartile
-max_pd = info_pd$max_predDist
-mean_pd = info_pd$mean_predDist
-sd_pd = info_pd$sd_predDist
-med_pd = info_pd$med_predDist
-mad_pd = info_pd$mad_predDist
-##
-## End (get information about the prediction distance )
-####
-
 
 ####
 ## Cross validation
@@ -101,7 +95,7 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"),
                                   model_fun = RF_fun, 
                                   pred_fun = RF_pred_fun,
                                   smp_fun = partition_loo, 
-                                  smp_args = list(buffer = 3000))
+                                  smp_args = list(buffer = med_pd))
 
 # Get test RMSE
 test_RMSE = sp_cv_RF$error_rep$test_rmse
@@ -414,8 +408,7 @@ parallel::stopCluster(cluster)
 
 # End time measurement
 end_time = Sys.time()
-print("bygone time")
-print(end_time - start_time)
+bygone_time = end_time - start_time
 ##
 ## End (explore the relationship between buffer distance and RMSE)
 ####

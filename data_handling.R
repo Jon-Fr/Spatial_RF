@@ -13,9 +13,9 @@ p_load("concaveman")
 options("scipen"= 999, "digits"=4)
 
 # Load data
-load("Data/.rda")
+load("Data/run_nitrate_de.rda")
 
-d = 
+d = d
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -143,7 +143,7 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 ## calculate statistical parameters for the prediction distance 
 
 # Create data vector
-dv = c("NuM_L_sub_2")
+dv = c("NuM_L_sub_4")
 
 # Create vector for the results
 info_pd_vec = c()
@@ -155,9 +155,9 @@ for (i in dv){
   d = sub_subset
   
   # "Create" prediction areas
-  #c_hull_buff(data = d, buffer_dist = 1000, c_r_s = "EPSG:25832", 
-  #            coords_vec = c("X", "Y"), 
-  #            out_path = paste("Data/", i, "_prediction_area", sep = ""))
+  c_hull_buff(data = d, buffer_dist = 1000, c_r_s = "EPSG:25832", 
+              coords_vec = c("X", "Y"), 
+              out_path = paste("Data/", i, "_prediction_area", sep = ""))
   
   # Get information about the prediction distance 
   info_pd = info_predDist(path_predArea = paste("Data/", i, "_prediction_area.gpkg", sep = ""), 

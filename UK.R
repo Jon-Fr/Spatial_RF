@@ -5,7 +5,6 @@
 library("pacman")
 p_load("sp")
 p_load("sf")
-p_load("terra")
 p_load("sperrorest")
 p_load("purrr")
 p_load("parallel")
@@ -20,41 +19,23 @@ p_load("nlme")
 p_load("automap")
 
 # Additional functions that are not included in packages
-source("auxiliary_functions.R", encoding = "UTF-8")
 source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data (for now use a subset)
-load("Data/NuM_L_sub_4.rda")
-d = sub_subset
+# Load data and formula 
+load("Data/NuM_L.rda")
+d = NuM_L
 
 # Get information about the prediction distance 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_2_prediction_area.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
-
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = third_quartile
-max_pd = info_pd$max_predDist
-mean_pd = info_pd$mean_predDist
-sd_pd = info_pd$sd_predDist
-med_pd = info_pd$med_predDist
-mad_pd = info_pd$mad_predDist
+pd_df = info_d_NuM_L$predDist_df
+max_pd = max(pd_df$lyr.1)
+mean_pd = mean(pd_df$lyr.1)
+med_pd = median(pd_df$lyr.1)
 
 # Create a spatial points df 
 sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
-
-# Adjusted formula
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y)
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -77,9 +58,9 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 ## 
 
 ## Directional semivariograms
-dir_svgm_fd = gstat::variogram(fo, data=sp_df, cutoff = max_pd, 
+dir_svgm_fd = gstat::variogram(fo_lm, data=sp_df, cutoff = max_pd, width = 1000, 
                                alpha = c(0, 45, 90, 135)) 
-dir_svgm_sd = gstat::variogram(fo, data=sp_df, cutoff = mean_pd, 
+dir_svgm_sd = gstat::variogram(fo_lm, data=sp_df, cutoff = med_pd, width = 300,
                                alpha = c(0, 45, 90, 135)) 
 #0:north, 45:north-east, 90:east, 135:south-east 
 plot(dir_svgm_fd, cex.lab = 1.25, xlab = "distance (m)")
@@ -88,7 +69,7 @@ plot(dir_svgm_sd, cex.lab = 1.25, xlab = "distance (m)")
 
 ## Conduct multiple linear regression (MLR)
 # Create MLR model
-MLR_model = lm(fo, data=d)
+MLR_model = lm(fo_lm, data=d)
 summary(MLR_model)
 # Some diagnostic plots
 plot(residuals(MLR_model) ~ predict(MLR_model), cex.lab = 1.25,
@@ -108,35 +89,33 @@ sp_df$mlr_resi = MLR_model$residuals
 ## Empirical semivariogram (EmSv) of the residuals 
 ## of the multiple linear regression model
 # Full distance
-emp_svario_resi_fd = gstat::variogram(mlr_resi~1, data=sp_df, cressie = TRUE, 
+emp_svario_resi_fd = gstat::variogram(mlr_resi~1, data=sp_df, 
                                       cutoff = max_pd, width = 1000)  
 plot(emp_svario_resi_fd$dist, emp_svario_resi_fd$gamma)
 
-# Short distance (mean predction distance)
-emp_svario_resi_sd = gstat::variogram(mlr_resi~1, data=sp_df, cutoff = mean_pd, 
-                                      cressie = TRUE, width = 100) 
+# Short distance (median predction distance)
+emp_svario_resi_sd = gstat::variogram(mlr_resi~1, data=sp_df, cutoff = med_pd, 
+                                      width = 100) 
 plot(emp_svario_resi_sd$dist, emp_svario_resi_sd$gamma)
 
 
 ## Fit variogram model to OLS residuals (semi-automatic)
 # Fit model by eye 
-resid_vm = gstat::vgm(model = "Exc", range = 2750, psill = 16)
+resid_vm = gstat::vgm(model = "Exc", range = 1000, psill = 8)
 print(plot(emp_svario_resi_fd, pl = FALSE, model = resid_vm))
 print(plot(emp_svario_resi_sd, pl = FALSE, model = resid_vm))
 
 # Adjust the variogram model with gstat automatic fit 
-# (does not work well in this case)
-#resid_vmf = fit.variogram(object =  emp_svario_resi_sd, resid_vm)
-#print(plot(emp_svario_resi_fd, pl = FALSE, model = resid_vmf))
-#print(plot(emp_svario_resi_sd, pl = FALSE, model = resid_vmf))
+resid_vmf = fit.variogram(object =  emp_svario_resi_sd, resid_vm)
+print(plot(emp_svario_resi_fd, pl = FALSE, model = resid_vmf))
+print(plot(emp_svario_resi_sd, pl = FALSE, model = resid_vmf))
 
 ## Fit variogram model to OLS residuals (automatic)
-## (results are okay)
-resid_vmf_au = automap::autofitVariogram(formula = fo, 
+resid_vmf_au = automap::autofitVariogram(formula = fo_lm, 
                                          input_data = sp_df, 
                                          model = c("Mat", "Exp"),
+                                         kappa = c(0.1,0.2,0.3),
                                          fix.values = c(0, NA, NA),
-                                         cressie = TRUE,
                                          verbose = TRUE)
 print(plot(emp_svario_resi_fd, pl = FALSE, 
            model = resid_vmf_au["var_model"]$var_model))
@@ -149,10 +128,11 @@ print(plot(emp_svario_resi_sd, pl = FALSE,
 # Prepare the correlogram for the GLS model 
 # Exc is not available therefore Exp is used
 # Get the range 
-resid_vm_exp = gstat::vgm(model = "Exp", range = 2000, psill = 14)
+resid_vm_exp = gstat::vgm(model = "Exp", range = 1000, psill = 7.5)
 print(plot(emp_svario_resi_fd, pl = FALSE, model = resid_vm_exp ))
 print(plot(emp_svario_resi_sd, pl = FALSE, model = resid_vm_exp ))
 range = resid_vm_exp[1,"range"]
+# gstat automatic fit does not work
 #resid_vmf_exp = fit.variogram(object =  emp_svario_resi_sd, resid_vm_exp)
 #print(plot(emp_svario_resi_fd, pl = FALSE, model = resid_vmf_exp))
 #print(plot(emp_svario_resi_sd, pl = FALSE, model = resid_vmf_exp))
@@ -164,44 +144,41 @@ autocor = nlme::Initialize(autocor, data = sp_df)
 autocor
 
 # Perform gls regression
-gls_model = nlme::gls(fo, correlation = autocor, data = sp_df)
+gls_model = nlme::gls(fo_lm, correlation = autocor, data = sp_df)
 summary(gls_model)
 # Add residuals to sp_df
 sp_df$gls_resi = resid(gls_model)
 
 # EmSv (full distance)
 emp_svario_gls_resi_fd = variogram(gls_resi ~ 1, data=sp_df, 
-                                   cressie = TRUE, cutoff = max_pd, 
-                                   width = 1000)
+                                   cutoff = max_pd, width = 1000)
 plot(emp_svario_gls_resi_fd$dist, emp_svario_gls_resi_fd$gamma)
 
 # EmSv (short distance)                             
-emp_svario_gls_resi_sd = variogram(gls_resi ~ 1, data=sp_df, 
-                                   cressie = TRUE, cutoff = mean_pd, 
-                                   width = 300)
+emp_svario_gls_resi_sd = variogram(gls_resi ~ 1, data=sp_df, cutoff = med_pd, 
+                                   width = 100)
 plot(emp_svario_gls_resi_sd$dist, emp_svario_gls_resi_sd$gamma)
 
 
 ## Fit variogram model to GLS residuals (semi-automatic)
 # Fit model by eye 
-gls_resid_vm = gstat::vgm(model = "Exc", range = 2500, psill = 15.5)
+gls_resid_vm = gstat::vgm(model = "Exc", range = 1000, psill = 8)
 print(plot(emp_svario_gls_resi_fd, pl = FALSE, model = gls_resid_vm))
 print(plot(emp_svario_gls_resi_sd, pl = FALSE, model = gls_resid_vm))
 
 # Adjust the variogram model with gstat automatic fit 
-# (does not work well in this case)
-#gls_resid_vmf = fit.variogram(object =  emp_svario_gls_resi_sd, gls_resid_vm)
-#print(plot(emp_svario_gls_resi_fd, pl = FALSE, model = gls_resid_vmf))
-#print(plot(emp_svario_gls_resi_sd, pl = FALSE, model = gls_resid_vmf))
+gls_resid_vmf = fit.variogram(object =  emp_svario_gls_resi_sd, gls_resid_vm)
+print(plot(emp_svario_gls_resi_fd, pl = FALSE, model = gls_resid_vmf))
+print(plot(emp_svario_gls_resi_sd, pl = FALSE, model = gls_resid_vmf))
 
 ## Fit variogram model to GLS residuals (automatic)
 ## (results are okay)
-gls_resid_vmf_au = automap::autofitVariogram(formula = fo, 
+gls_resid_vmf_au = automap::autofitVariogram(formula = fo_lm, 
                                          input_data = sp_df, 
                                          model = c("Mat", "Exp"),
                                          fix.values = c(0, NA, NA),
+                                         kappa = c(0.1, 0.2),
                                          GLS.model = resid_vmf_au["var_model"]$var_model,
-                                         cressie = TRUE,
                                          verbose = TRUE)
 
 print(plot(emp_svario_gls_resi_fd, pl = FALSE, 
@@ -230,13 +207,17 @@ vmf_fun = function(formula, data){
   sp_df = sp::SpatialPointsDataFrame(coords = data[,c("X","Y")], data = data)
   # OLS residual variogram model fitting
   resid_vmf = automap::autofitVariogram(formula = formula, input_data = sp_df,
-                                        model = c("Mat", "Exp"), cressie = TRUE)
+                                        model = c("Mat", "Exp"),
+                                        kappa = c(0.1, 0.2),
+                                        fix.values = c(0, NA, NA))
+
   # GLS residual variogram model fitting
   resid_vmf_gls = automap::autofitVariogram(formula = formula,
                                             input_data = sp_df, 
                                             model = c("Mat", "Exp"),
-                                            GLS.model = resid_vmf["var_model"]
-                                            $var_model, cressie = TRUE)
+                                            kappa = c(0.1, 0.2),
+                                            fix.values = c(0, NA, NA),
+                                            GLS.model = resid_vmf["var_model"]$var_model)
   # Return variogram model and training data
   return_list = list(model = resid_vmf_gls["var_model"]$var_model, 
                      train_data = sp_df)
@@ -244,7 +225,7 @@ vmf_fun = function(formula, data){
 }
 
 # Create prediction function
-UK_pred_fun = function(object, newdata, formula){
+UK_pred_fun = function(object, newdata, formula, max_dist){
   # Get the training data
   sp_df_train = object$train_data
   # Create spatial points df
@@ -254,7 +235,8 @@ UK_pred_fun = function(object, newdata, formula){
                          locations = sp_df_train,
                          model = object$model,
                          newdata = sp_df_newdata,
-                         debug.level = 0)
+                         debug.level = 0,
+                         maxdist = max_dist)
   return(uk_pred$var1.pred)
 }
 
@@ -265,10 +247,12 @@ print(start_time)
 # Perform the spatial cross-validation
 # Future for parallelization
 #future::plan(future.callr::callr, workers = 10)
-sp_cv_UK = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"), 
+sp_cv_UK = sperrorest::sperrorest(formula = fo_lm, data = d, 
+                                  coords = c("X","Y"), 
                                   model_fun = vmf_fun, 
                                   pred_fun = UK_pred_fun,
-                                  pred_args = list(formula = fo),
+                                  pred_args = list(formula = fo_lm, 
+                                                   max_dist = mean_pd),
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = med_pd))
 
@@ -302,13 +286,13 @@ vmf_fun = function(formula, data){
   sp_df = sp::SpatialPointsDataFrame(coords = data[,c("X","Y")], data = data)
   # OLS residual variogram model fitting
   resid_vmf = automap::autofitVariogram(formula = formula, input_data = sp_df,
-                                        model = c("Sph"), cressie = TRUE)
+                                        model = c("Sph"))
   # GLS residual variogram model fitting
   resid_vmf_gls = automap::autofitVariogram(formula = formula,
                                             input_data = sp_df, 
                                             model = c("Sph"),
                                             GLS.model = resid_vmf["var_model"]
-                                            $var_model, cressie = TRUE)
+                                            $var_model)
   # return variogram model an training data
   return_list = list(model = resid_vmf_gls["var_model"]$var_model, 
                      train_data = sp_df)

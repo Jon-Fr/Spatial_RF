@@ -56,3 +56,6 @@ install_github("https://github.com/AleksandarSekulic/Rmeteo")
 
 # Computes the concave polygon(s) for one or several set of points
 (concaveman)
+
+# Support Functions and Datasets for Venables and Ripley's MASS
+(MASS)

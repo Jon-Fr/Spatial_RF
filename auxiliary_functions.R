@@ -16,11 +16,13 @@ p_load("terra")
 ################################################################################
 
 #####
-## Function the get some statistical parameters for the prediction distance 
+## Function to create a prediction distance df and a point distance df 
+## (distance between a data point and the nearest point) 
 ##
-
-info_predDist = function(path_predArea, dataPoints_df, c_r_s, resolution,
+info_dist = function(path_predArea, dataPoints_df, c_r_s, resolution,
                              xy){
+  
+  ## Calculate the prediction distance
   # Load the prediction area file
   pred_area = terra::vect(path_predArea)
   
@@ -36,7 +38,7 @@ info_predDist = function(path_predArea, dataPoints_df, c_r_s, resolution,
   # Convert the data points df to a spatial vector
   spv_dp = terra::vect(dataPoints_df, geom=xy, crs = c_r_s)
   
-  # Calculate the distance
+  # Calculate the prediction distance
   dist_dp_pl = terra::distance(raster_pl, spv_dp, unit="m")
   
   # Set raster cell values to NA that where NA in the original raster
@@ -45,18 +47,22 @@ info_predDist = function(path_predArea, dataPoints_df, c_r_s, resolution,
   # Raster to df
   dist_dp_pl_df = terra::as.data.frame(dist_dp_pl)
   
-  # Get the max, mean and median prediction distance as well as the standard 
-  # deviation and the median absolute deviation
-  mean_pd = mean(x = dist_dp_pl_df[,1], na.rm = TRUE)
-  sd_pd = sd(x = dist_dp_pl_df[,1], na.rm = TRUE)
-  median_pd = median(x = dist_dp_pl_df[,1], na.rm = TRUE)
-  mad_pd = mad(x = dist_dp_pl_df[,1], na.rm = TRUE)
-  max_pd = max(x = dist_dp_pl_df[,1], na.rm =TRUE)
-  # Return list
-  results = list(max_predDist = max_pd, mean_predDist = mean_pd, 
-                 med_predDist = median_pd,
-                 sd_predDist = sd_pd, mad_predDist = mad_pd, 
-                 predDist_df = dist_dp_pl_df)
+  ## Calculate the point distance
+  # Create sf object
+  sf_df = sf::st_as_sf(dataPoints_df, coords = xy, crs = c_r_s)
+  
+  # Calculate distance between all points
+  dist_dp_mat = st_distance(sf_df)
+  
+  # Calculate nearest distance
+  n_dist = apply(dist_dp_mat, 1, function(x) {
+    return(sort(x, partial = 2)[2])})
+  
+  # Create df 
+  n_dist_df = as.data.frame(n_dist)
+  
+  ## Return list
+  results = list(predDist_df = dist_dp_pl_df, n_pointDist_df = n_dist_df)
   
   # Remove some not longer necessary data
   remove("dist_dp_pl_df", "dist_dp_pl", "raster_pl")
@@ -64,7 +70,7 @@ info_predDist = function(path_predArea, dataPoints_df, c_r_s, resolution,
   return(results)
 }
 ##
-## End (function the get some statistical parameters for the pd)
+## End (Function the a prediction distance df and a point distance df)
 ####
 
 ####
@@ -84,6 +90,39 @@ c_hull_buff = function(data, buffer_dist, c_r_s, coords_vec, out_path){
 ##
 ## End (function to compute concave hull add a buffer and export it)
 ####
+
+####
+## Box-Cox functions
+##
+inv_boxcox <- function(x, lambda) {
+  if (abs(lambda) < 1e-15) {
+    res <- exp(x)
+  } else {
+    res <- (x*lambda + 1)^(1/lambda)
+  }
+  res
+}
+
+boxcox <- function(x, lambda) {
+  if (abs(lambda) < 1e-15) {
+    res <- log(x)
+  } else {
+    res <- (x^lambda - 1) / lambda
+  }
+  res
+}
+##
+## End (Box-Cox functions)
+####
 ################################################################################
 ## End (functions)
+################################################################################
+
+
+################################################################################
+## Test area
+################################################################################
+
+################################################################################
+## End (test area)
 ################################################################################

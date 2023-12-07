@@ -17,6 +17,7 @@ load("Data/NuM_L.rda")
 d = NuM_L
 fo_lm = fo_lm_NuM_L
 
+
 # Formula for base RF-model
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 

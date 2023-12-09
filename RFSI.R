@@ -16,42 +16,41 @@ p_load("future")
 p_load("meteo")
 
 # Additional functions that are not included in packages
-source("auxiliary_functions.R", encoding = "UTF-8")
 source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data (for now use a subset)
-load("Data/NuM_L_sub_4.rda")
-d = sub_subset
+# Load data and formula
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_4_prediction_area.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
+pd_df = info_d_WuS_SuB$predDist_df
+mean_pd = mean(pd_df$lyr.1)
+med_pd = median(pd_df$lyr.1)
 
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = third_quartile
-max_pd = info_pd$max_predDist
-mean_pd = info_pd$mean_predDist
-sd_pd = info_pd$sd_predDist
-med_pd = info_pd$med_predDist
-mad_pd = info_pd$mad_predDist
-
-# Adjusted formula
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y)
+# Set buffer 
+buffer = 0
 
 ####
 ## Data and model argument preparation
 ##
+## Get mtry value
+# Get number of explanatory variables
+# formula to character
+fo_chr = as.character(fo_RF)
+# count number of +, add 1
+count = 1
+for (i in 1:nchar(fo_chr[[3]])){
+  chr = substring(fo_chr[[3]],i,i)
+  if (chr == "+"){
+   count = count + 1 
+  }
+}
+mtry_n = round(sqrt(count))
 
 # Observation column
 obs_col = "bcNitrate"
@@ -59,12 +58,9 @@ obs_col = "bcNitrate"
 # CRS
 c_r_s = "EPSG:25832"
 
-# Add id column
-d$id = 1:nrow(d)
-
 # Names of the station ID (staid), longitude (X), latitude (Y) 
 # and time columns in data
-d.staid.x.y.z = c("id","X","Y",NA)
+d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
 ##
 ## End (data and model argument preparation)
 ####
@@ -84,33 +80,29 @@ d.staid.x.y.z = c("id","X","Y",NA)
 ################################################################################
 ## RFSI spatial leave one out cross validation 
 ################################################################################
-#####
-## Get the mean and median prediction distance 
-## (for now use the test area as prediction area)
-##
-
-m_m_pd = mean_med_predDist(path_predArea = "test_area.gpkg", dataPoints_df = d,
-                           c_r_s = "EPSG:25832")
-##
-## End (get the mean and median prediction distance)
-####
-
-
 ####
 ## Cross validation
 ## 
 
 # Create model function 
-RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s){
+RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s, mtry_n){
   # Create model
   RFSI_model = meteo::rfsi(formula = formula,
                       data = data,
                       s.crs = c_r_s,
                       data.staid.x.y.z = data.staid.x.y.z,
-                      n.obs = 10, # number of nearest observations
+                      n.obs = 50, # number of nearest observations
                       progress = FALSE,
                       # ranger parameters
-                      num.trees = 500)
+                      seed = 7,
+                      oob.error = FALSE,
+                      num.trees = 500,
+                      sample.fraction = 1,
+                      mtry = mtry_n,
+                      min.node.size = 5,
+                      min.bucket = 1,
+                      max.depth = 0,
+                      splitrule = "variance")
   # Return model and training data
   return_list = list(model = RFSI_model, train_data = data)
   return(return_list)
@@ -137,6 +129,11 @@ RFSI_pred_fun = function(object, newdata, data.staid.x.y.z, obs_col, c_r_s){
   return(RFSI_prediction[,4])
 }
 
+start_time = Sys.time()
+test = RFSI_fun(formula = fo_RF, data = d[2:2360,], data.staid.x.y.z = d.staid.x.y.z, c_r_s = c_r_s, mtry_n = mtry_n)
+test1 = RFSI_pred_fun(object = test, newdata = d[1,], data.staid.x.y.z = d.staid.x.y.z, obs_col = obs_col, c_r_s = c_r_s)
+print(Sys.time() - start_time)
+
 # Start time measurement
 start_time = Sys.time()
 print(start_time)
@@ -144,7 +141,8 @@ print(start_time)
 # Perform the spatial cross-validation
 # Future for parallelization
 future::plan(future.callr::callr, workers = 10)
-sp_cv_RFSI = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"), 
+sp_cv_RFSI = sperrorest::sperrorest(formula = fo_RF, data = d, 
+                                    coords = c("X","Y"), 
                                     model_fun = RFSI_fun,
                                     model_args = list(c_r_s = c_r_s,
                                       data.staid.x.y.z=d.staid.x.y.z),
@@ -152,7 +150,8 @@ sp_cv_RFSI = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"),
                                     pred_args = list(obs_col=obs_col, 
                                                      c_r_s = c_r_s,
                                                      data.staid.x.y.z=
-                                                       d.staid.x.y.z),
+                                                       d.staid.x.y.z,
+                                                     mtry_n = mtry_n),
                                     smp_fun = partition_loo, 
                                     smp_args = list(buffer=med_pd))
 
@@ -163,6 +162,13 @@ test_RMSE
 # End time measurement
 end_time = Sys.time()
 bygone_time = end_time - start_time
+print(bygone_time)
+
+# Set file name 
+file_name = paste("Results/",data_set,"_sp_cv_RFSI_",as.character(round(buffer)),
+                  ".rda", sep = "")
+# Save result 
+save(sp_cv_RFSI, bygone_time, file = file_name)
 ##
 ## End (cross validation)
 #### 

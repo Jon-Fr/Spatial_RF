@@ -11,11 +11,12 @@ p_load("gstat")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula 
-load("Data/NuM_L.rda")
-d = NuM_L
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_lm = fo_lm_WuS_SuB
   
 # Get information about the prediction distance 
-pd_df = info_d_NuM_L$predDist_df
+pd_df = info_d_WuS_SuB$predDist_df
 hist(pd_df$lyr.1)
 third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
 tq_pd = third_quartile
@@ -39,7 +40,7 @@ sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
 ## Empirical semivariogram (EmSv) of the variable of interest
 ##
 # Full distance (maximal prediction distance)
-emp_svario_fd = gstat::variogram(bcNitrate~1, data=sp_df, cutoff = max_pd, 
+emp_svario_fd = gstat::variogram(bcNitrate~1, data=sp_df, cutoff = max_pd,  
                                  width = 1000) 
 plot(emp_svario_fd$dist, emp_svario_fd$gamma)
 

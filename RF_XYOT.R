@@ -22,14 +22,19 @@ source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data and formula 
-load("Data/NuM_L.rda")
-d = NuM_L
+# Load data and formula
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-pd_df = info_d_NuM_L$predDist_df
+pd_df = info_d_WuS_SuB$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
+
+# Set buffer 
+buffer = med_pd
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -55,7 +60,8 @@ med_pd = median(pd_df$lyr.1)
 RF_fun = function(formula, data){
   RF_model = ranger::ranger(formula = formula, 
                             data = data,
-                            oob.error = FALSE)
+                            oob.error = FALSE,
+                            seed = 7)
   return(RF_model)
 }
 
@@ -78,7 +84,7 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                   model_fun = RF_fun, 
                                   pred_fun = RF_pred_fun,
                                   smp_fun = partition_loo, 
-                                  smp_args = list(buffer = med_pd))
+                                  smp_args = list(buffer = buffer))
 
 # Get test RMSE
 test_RMSE = sp_cv_RF$error_rep$test_rmse
@@ -87,6 +93,13 @@ test_RMSE
 # End time measurement
 end_time = Sys.time()
 bygone_time = end_time - start_time
+print(bygone_time)
+
+# Set file name 
+file_name = paste("Results/",data_set,"_sp_cv_RF_",as.character(round(buffer)),
+                  ".rda", sep = "")
+# Save result 
+save(sp_cv_RF, bygone_time, file = file_name)
 ##
 ## End (cross validation)
 #### 

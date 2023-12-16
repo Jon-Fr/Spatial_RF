@@ -39,9 +39,6 @@ med_pd = median(pd_df$lyr.1)
 # Set buffer 
 buffer = 0
 
-# Set maxdist for local Kriging 
-lK_dist = 35000
-
 # Create a spatial points df 
 sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
 ################################################################################
@@ -374,7 +371,7 @@ vmf_fun = function(formula, data){
 }
 
 # Create prediction function
-UK_pred_fun = function(object, newdata, formula, max_dist){
+UK_pred_fun = function(object, newdata, formula){
   # Get the training data
   sp_df_train = object$train_data
   # Create spatial points df
@@ -384,14 +381,14 @@ UK_pred_fun = function(object, newdata, formula, max_dist){
                          locations = sp_df_train,
                          model = object$model,
                          newdata = sp_df_newdata,
-                         debug.level = 0,
-                         maxdist = max_dist)
+                         debug.level = 0)
   return(uk_pred$var1.pred)
 }
 
 # Start time measurement
 start_time = Sys.time()
 print(start_time)
+
 
 # Perform the spatial cross-validation
 # Future for parallelization
@@ -400,8 +397,7 @@ sp_cv_UK = sperrorest::sperrorest(formula = fo_lm, data = d,
                                   coords = c("X","Y"), 
                                   model_fun = vmf_fun, 
                                   pred_fun = UK_pred_fun,
-                                  pred_args = list(formula = fo_lm, 
-                                                   max_dist = lK_dist),
+                                  pred_args = list(formula = fo_lm),
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = buffer))
 

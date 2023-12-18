@@ -141,7 +141,7 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d,
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = buffer),
                                   importance = TRUE, 
-                                  imp_permutations = 5,
+                                  imp_permutations = 20,
                                   imp_variables = imp_vars_RF,
                                   imp_sample_from = "all")
 

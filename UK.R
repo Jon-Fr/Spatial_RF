@@ -39,6 +39,9 @@ med_pd = median(pd_df$lyr.1)
 # Set buffer 
 buffer = 0
 
+# Calculate importance for these variables
+imp_vars_lm = all.vars(fo_lm)[-1]
+
 # Create a spatial points df 
 sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
 ################################################################################
@@ -399,7 +402,11 @@ sp_cv_UK = sperrorest::sperrorest(formula = fo_lm, data = d,
                                   pred_fun = UK_pred_fun,
                                   pred_args = list(formula = fo_lm),
                                   smp_fun = partition_loo, 
-                                  smp_args = list(buffer = buffer))
+                                  smp_args = list(buffer = buffer),
+                                  importance = TRUE, 
+                                  imp_permutations = 1,
+                                  imp_variables = imp_vars_lm,
+                                  imp_sample_from = "all")
 
 # Get test RMSE
 test_RMSE = sp_cv_UK$error_rep$test_rmse

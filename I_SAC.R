@@ -5,7 +5,7 @@
 library("pacman")
 p_load("sp")
 p_load("sf")
-p_load("gstat")       
+p_load("gstat")     
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
@@ -23,7 +23,6 @@ tq_pd = third_quartile
 max_pd = max(pd_df$lyr.1)
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
-
 
 # Create a spatial points df 
 sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)  

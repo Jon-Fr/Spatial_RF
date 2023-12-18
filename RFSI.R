@@ -35,6 +35,8 @@ med_pd = median(pd_df$lyr.1)
 # Set buffer 
 buffer = 0
 
+# Calculate importance for these variables
+imp_vars_RF = all.vars(fo_RF)[-1]
 ####
 ## Data and model argument preparation
 ##
@@ -130,8 +132,8 @@ RFSI_pred_fun = function(object, newdata, data.staid.x.y.z, obs_col, c_r_s){
 }
 
 start_time = Sys.time()
-test = RFSI_fun(formula = fo_RF, data = d[2:2360,], data.staid.x.y.z = d.staid.x.y.z, c_r_s = c_r_s, mtry_n = mtry_n)
-test1 = RFSI_pred_fun(object = test, newdata = d[1,], data.staid.x.y.z = d.staid.x.y.z, obs_col = obs_col, c_r_s = c_r_s)
+#test = RFSI_fun(formula = fo_RF, data = d[2:2360,], data.staid.x.y.z = d.staid.x.y.z, c_r_s = c_r_s, mtry_n = mtry_n)
+#test1 = RFSI_pred_fun(object = test, newdata = d[1,], data.staid.x.y.z = d.staid.x.y.z, obs_col = obs_col, c_r_s = c_r_s)
 print(Sys.time() - start_time)
 
 # Start time measurement
@@ -153,7 +155,11 @@ sp_cv_RFSI = sperrorest::sperrorest(formula = fo_RF, data = d,
                                                        d.staid.x.y.z,
                                                      mtry_n = mtry_n),
                                     smp_fun = partition_loo, 
-                                    smp_args = list(buffer=med_pd))
+                                    smp_args = list(buffer=med_pd),
+                                    importance = TRUE, 
+                                    imp_permutations = 1,
+                                    imp_variables = imp_vars_RF,
+                                    imp_sample_from = "all")
 
 # Get test RMSE
 test_RMSE = sp_cv_RFSI$error_rep$test_rmse

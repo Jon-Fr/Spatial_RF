@@ -18,14 +18,6 @@ load("Data/WuS_SuB.rda")
 d = WuS_SuB
 fo_lm = fo_lm_WuS_SuB
 
-# Formula for base RF-model
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                  agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
-
 # Get information about the prediction distance 
 pd_df = info_d_WuS_SuB$predDist_df
 mean_pd = mean(pd_df$lyr.1)
@@ -33,6 +25,14 @@ med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
 buffer = med_pd
+
+# Formula for base RF-model
+fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                  nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                  agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
+                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
+                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
@@ -84,7 +84,7 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = buffer),
                                   importance = TRUE, 
-                                  imp_permutations = 10,
+                                  imp_permutations = 1,
                                   imp_variables = imp_vars_lm,
                                   imp_sample_from = "all")
 

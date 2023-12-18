@@ -35,6 +35,9 @@ med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
 buffer = med_pd
+
+# Calculate importance for these variables
+imp_vars_RF = all.vars(fo_RF)[-1]
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -84,7 +87,11 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                   model_fun = RF_fun, 
                                   pred_fun = RF_pred_fun,
                                   smp_fun = partition_loo, 
-                                  smp_args = list(buffer = buffer))
+                                  smp_args = list(buffer = buffer),
+                                  importance = TRUE, 
+                                  imp_permutations = 1,
+                                  imp_variables = imp_vars_RF,
+                                  imp_sample_from = "all")
 
 # Get test RMSE
 test_RMSE = sp_cv_RF$error_rep$test_rmse

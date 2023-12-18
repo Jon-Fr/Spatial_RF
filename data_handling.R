@@ -13,9 +13,6 @@ p_load("MASS")
 # Additional functions that are not included in packages
 source("auxiliary_functions.R", encoding = "UTF-8")
 
-# Fewer decimal places, apply penalty on exponential notation 
-options("scipen"= 999, "digits"=4)
-
 # Load data
 load("Data/run_nitrate_de.rda")
 
@@ -23,6 +20,9 @@ d = d
 
 # Add ID column for all data points
 d$ID_all_DE = 1:nrow(d)
+
+# Fewer decimal places, apply penalty on exponential notation 
+options("scipen"= 999, "digits"=4)
 
 # Compute tilted coordinates (formula: Møller et al. 2020) at 45 and 315 degree 
 # 315 is choose instead of 135 beaus 135 will produce negative coordinates

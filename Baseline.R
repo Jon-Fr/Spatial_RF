@@ -5,6 +5,7 @@
 library("pacman")
 p_load("sperrorest")
 p_load("future")
+p_load("ranger")
 
 # Additional functions that are not included in packages
 source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022

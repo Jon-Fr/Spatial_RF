@@ -99,7 +99,7 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"
                                   pred_fun = lm_pred_fun,
                                   smp_fun = partition_fun, 
                                   smp_args = smp_args,
-                                  importance = FALSE, 
+                                  importance = TRUE, 
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_lm,
                                   imp_sample_from = "all",

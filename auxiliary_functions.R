@@ -6,6 +6,7 @@ library("pacman")
 p_load("sp")
 p_load("sf")
 p_load("terra")
+p_load("sperrorest")
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -113,6 +114,76 @@ boxcox <- function(x, lambda) {
 }
 ##
 ## End (Box-Cox functions)
+####
+
+####
+## Partition leave one out function with buffer that retrains only cases where 
+## the distance between the test point and the training points is smaller than 
+## the buffer + the tolerance
+##
+partition_tt_dist <- function(data,
+                              coords = c("x", "y"),
+                              buffer = 0,
+                              tolerance = 100,
+                              c_r_s = NULL, 
+                              ndisc = nrow(data),
+                              return_train = TRUE,
+                              repetition = 1) {
+  resample <- list()
+  index <- seq_len(nrow(data)) # nocov
+  
+  res <- list()
+  for (i in index) {
+    if (!is.null(buffer)) {
+      di <- sqrt((data[, coords[1]] - data[i, coords[1]])^2 + # nolint
+                   (data[, coords[2]] - data[i, coords[2]])^2) # nolint
+    }
+    train_sel <- numeric()
+    
+    # leave-one-out with buffer:
+    test_sel <- i
+    if (return_train) {
+      if (is.null(buffer)) {
+        train_sel <- seq_len(nrow(data))[-i] # nocov
+      } else {
+        train_sel <- which(di > buffer)
+      }
+    }
+    if (return_train & (length(train_sel) == 0)) {
+      warning(paste0(
+        "empty training set in 'partition_disc': 'buffer'", # nocov  #nolint
+        " too large?"
+      )) # nocov
+    }
+    res[[as.character(i)]] <- list(train = train_sel, test = test_sel)
+  }
+  resample[[as.character(1)]] <- res
+  
+  ## Calculate distance to nearest neighbor
+  # Create new resample object for the cases that fulfill the condition 
+  resample_new = list()
+  for (i in 1:nrow(data)){
+    # Create sf object
+    sf_df = sf::st_as_sf(data, coords = coords)
+    # Calculate distance between test point and training points
+    dist_tt = st_distance(sf_df[resample$"1"[[i]]$test,], 
+                          sf_df[resample$"1"[[i]]$train,])
+    # Get minimum distance between test and train
+    min_dist = min(dist_tt)
+    # check if the minimum distance is smaller than the buffer + tolerance
+    # if it is add this case to the new resample object
+    if (min_dist < buffer + tolerance){
+      resample_new = append(resample_new, resample$"1"[i])
+    }
+  }
+  resample_new = list(resample_new)
+  
+  repres <- as.represampling(resample_new) # nolint
+  
+  return(repres)
+}
+##
+## End (partition leave one out function ...)
 ####
 ################################################################################
 ## End (functions)

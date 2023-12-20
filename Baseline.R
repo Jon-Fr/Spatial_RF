@@ -25,7 +25,13 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = med_pd
+buffer = 0
+
+# Set tolerance 
+tolerance = "all"
+
+# Set number of permutations 
+n_perm = 10
 
 # Formula for base RF-model
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
@@ -85,7 +91,7 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = buffer),
                                   importance = TRUE, 
-                                  imp_permutations = 1,
+                                  imp_permutations = n_perm,
                                   imp_variables = imp_vars_lm,
                                   imp_sample_from = "all")
 
@@ -99,7 +105,8 @@ bygone_time = end_time - start_time
 print(bygone_time)
 
 # Set file name 
-file_name = paste("Results/",data_set,"_sp_cv_MLR_",as.character(round(buffer)),
+file_name = paste("Results/", data_set, "_sp_cv_MLR_", as.character(round(buffer)),
+                  "_+", as.character(tolerance), "_", as.character(n_perm), 
                   ".rda", sep = "")
 # Save result 
 save(sp_cv_MLR, bygone_time, file = file_name)
@@ -142,7 +149,7 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d,
                                   smp_fun = partition_loo, 
                                   smp_args = list(buffer = buffer),
                                   importance = TRUE, 
-                                  imp_permutations = 20,
+                                  imp_permutations = n_perm,
                                   imp_variables = imp_vars_RF,
                                   imp_sample_from = "all")
 
@@ -156,7 +163,8 @@ bygone_time = end_time - start_time
 print(bygone_time)
 
 # Set file name 
-file_name = paste("Results/",data_set,"_sp_cv_bRF_",as.character(round(buffer)),
+file_name = paste("Results/", data_set, "_sp_cv_bRF_", as.character(round(buffer)),
+                  "_+", as.character(tolerance), "_", as.character(n_perm), 
                   ".rda", sep = "")
 # Save result 
 save(sp_cv_RF, bygone_time, file = file_name)

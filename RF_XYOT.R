@@ -17,7 +17,7 @@ p_load("ranger")
 p_load("dplyr")
 
 # Additional functions that are not included in packages
-source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
+source("auxiliary_functions.R", encoding = "UTF-8")
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
@@ -34,10 +34,26 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = med_pd
+buffer = 0
+
+# Set tolerance (all = partition_loo with buffer)
+tolerance = "all"
+
+# Set number of permutations 
+n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+
+## Auto preparation
+# Set partition function and sample arguments 
+if (tolerance == "all"){
+  partition_fun = partition_loo
+  smp_args = list(buffer = buffer)
+} else{
+  partition_fun = partition_tt_dist
+  smp_args = list(buffer = buffer, tolerance = tolerance)
+}
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -86,12 +102,13 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                   coords = c("X","Y"), 
                                   model_fun = RF_fun, 
                                   pred_fun = RF_pred_fun,
-                                  smp_fun = partition_loo, 
-                                  smp_args = list(buffer = buffer),
+                                  smp_fun = partition_fun, 
+                                  smp_args = smp_args,
                                   importance = TRUE, 
-                                  imp_permutations = 1,
+                                  imp_permutations = n_perm,
                                   imp_variables = imp_vars_RF,
-                                  imp_sample_from = "all")
+                                  imp_sample_from = "all",
+                                  distance = TRUE)
 
 # Get test RMSE
 test_RMSE = sp_cv_RF$error_rep$test_rmse
@@ -103,7 +120,8 @@ bygone_time = end_time - start_time
 print(bygone_time)
 
 # Set file name 
-file_name = paste("Results/",data_set,"_sp_cv_RF_",as.character(round(buffer)),
+file_name = paste("Results/", data_set,"_sp_cv_RF_", as.character(round(buffer)),
+                  "_+", as.character(tolerance), "_", as.character(n_perm),
                   ".rda", sep = "")
 # Save result 
 save(sp_cv_RF, bygone_time, file = file_name)

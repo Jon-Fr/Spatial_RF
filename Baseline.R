@@ -45,7 +45,8 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 imp_vars_lm = all.vars(fo_lm)[-1]
 imp_vars_RF = all.vars(fo)[-1]
 
-## Auto prep
+## Auto preparation
+# Set partition function and sample arguments 
 if (tolerance == "all"){
   partition_fun = partition_loo
   smp_args = list(buffer = buffer)

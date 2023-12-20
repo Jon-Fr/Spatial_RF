@@ -16,7 +16,7 @@ p_load("future")
 p_load("meteo")
 
 # Additional functions that are not included in packages
-source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
+source("auxiliary_functions.R", encoding = "UTF-8")
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
@@ -35,8 +35,25 @@ med_pd = median(pd_df$lyr.1)
 # Set buffer 
 buffer = 0
 
+# Set tolerance (all = partition_loo with buffer)
+tolerance = "all"
+
+# Set number of permutations 
+n_perm = 10
+
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+
+## Auto preparation
+# Set partition function and sample arguments 
+if (tolerance == "all"){
+  partition_fun = partition_loo
+  smp_args = list(buffer = buffer)
+} else{
+  partition_fun = partition_tt_dist
+  smp_args = list(buffer = buffer, tolerance = tolerance)
+}
+
 ####
 ## Data and model argument preparation
 ##
@@ -93,7 +110,7 @@ RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s, mtry_n){
                       data = data,
                       s.crs = c_r_s,
                       data.staid.x.y.z = data.staid.x.y.z,
-                      n.obs = 50, # number of nearest observations
+                      n.obs = 5, # number of nearest observations
                       progress = FALSE,
                       # ranger parameters
                       seed = 7,
@@ -131,11 +148,6 @@ RFSI_pred_fun = function(object, newdata, data.staid.x.y.z, obs_col, c_r_s){
   return(RFSI_prediction[,4])
 }
 
-start_time = Sys.time()
-#test = RFSI_fun(formula = fo_RF, data = d[2:2360,], data.staid.x.y.z = d.staid.x.y.z, c_r_s = c_r_s, mtry_n = mtry_n)
-#test1 = RFSI_pred_fun(object = test, newdata = d[1,], data.staid.x.y.z = d.staid.x.y.z, obs_col = obs_col, c_r_s = c_r_s)
-print(Sys.time() - start_time)
-
 # Start time measurement
 start_time = Sys.time()
 print(start_time)
@@ -154,12 +166,13 @@ sp_cv_RFSI = sperrorest::sperrorest(formula = fo_RF, data = d,
                                                      data.staid.x.y.z=
                                                        d.staid.x.y.z,
                                                      mtry_n = mtry_n),
-                                    smp_fun = partition_loo, 
+                                    smp_fun = partition_fun, 
                                     smp_args = list(buffer=med_pd),
                                     importance = TRUE, 
-                                    imp_permutations = 1,
+                                    imp_permutations = n_perm,
                                     imp_variables = imp_vars_RF,
-                                    imp_sample_from = "all")
+                                    imp_sample_from = "all",
+                                    distance = TRUE)
 
 # Get test RMSE
 test_RMSE = sp_cv_RFSI$error_rep$test_rmse
@@ -172,6 +185,7 @@ print(bygone_time)
 
 # Set file name 
 file_name = paste("Results/",data_set,"_sp_cv_RFSI_",as.character(round(buffer)),
+                  "_+", as.character(tolerance), "_", as.character(n_perm),
                   ".rda", sep = "")
 # Save result 
 save(sp_cv_RFSI, bygone_time, file = file_name)

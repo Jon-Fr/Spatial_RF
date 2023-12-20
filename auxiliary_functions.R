@@ -125,7 +125,6 @@ partition_tt_dist <- function(data,
                               coords = c("x", "y"),
                               buffer = 0,
                               tolerance = 100,
-                              c_r_s = NULL, 
                               ndisc = nrow(data),
                               return_train = TRUE,
                               repetition = 1) {

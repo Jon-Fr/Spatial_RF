@@ -8,7 +8,7 @@ p_load("future")
 p_load("ranger")
 
 # Additional functions that are not included in packages
-source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
+source("auxiliary_functions.R", encoding = "UTF-8")
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
@@ -27,7 +27,7 @@ med_pd = median(pd_df$lyr.1)
 # Set buffer 
 buffer = 0
 
-# Set tolerance 
+# Set tolerance (all = partition_loo with buffer)
 tolerance = "all"
 
 # Set number of permutations 
@@ -44,6 +44,15 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
 imp_vars_RF = all.vars(fo)[-1]
+
+## Auto prep
+if (tolerance == "all"){
+  partition_fun = partition_loo
+  smp_args = list(buffer = buffer)
+} else{
+  partition_fun = partition_tt_dist
+  smp_args = list(buffer = buffer, tolerance = tolerance)
+}
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -88,12 +97,13 @@ print(start_time)
 sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"), 
                                   model_fun = lm_fun, 
                                   pred_fun = lm_pred_fun,
-                                  smp_fun = partition_loo, 
-                                  smp_args = list(buffer = buffer),
-                                  importance = TRUE, 
+                                  smp_fun = partition_fun, 
+                                  smp_args = smp_args,
+                                  importance = FALSE, 
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_lm,
-                                  imp_sample_from = "all")
+                                  imp_sample_from = "all",
+                                  distance = TRUE)
 
 # Get test RMSE
 test_RMSE = sp_cv_MLR$error_rep$test_rmse
@@ -146,12 +156,13 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d,
                                   coords = c("X","Y"), 
                                   model_fun = RF_fun, 
                                   pred_fun = RF_pred_fun,
-                                  smp_fun = partition_loo, 
-                                  smp_args = list(buffer = buffer),
+                                  smp_fun = partition_fun, 
+                                  smp_args = smp_args,
                                   importance = TRUE, 
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_RF,
-                                  imp_sample_from = "all")
+                                  imp_sample_from = "all",
+                                  distance = TRUE)
 
 # Get test RMSE
 test_RMSE = sp_cv_RF$error_rep$test_rmse

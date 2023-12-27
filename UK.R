@@ -6,14 +6,6 @@ library("pacman")
 p_load("sp")
 p_load("sf")
 p_load("sperrorest")
-p_load("purrr")
-p_load("parallel")
-p_load("doParallel")
-p_load("foreach")
-p_load("future")
-
-p_load("dplyr")
-
 p_load("gstat")       
 p_load("nlme")
 p_load("automap")
@@ -51,7 +43,6 @@ imp_vars_lm = all.vars(fo_lm)[-1]
 # Create a spatial points df 
 sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
 
-## Auto preparation
 # Set partition function and sample arguments 
 if (tolerance == "all"){
   partition_fun = partition_loo
@@ -377,14 +368,14 @@ vmf_fun = function(formula, data){
                                         fix.values = c(0, NA, NA))
 
   # GLS residual variogram model fitting
-  resid_vmf_gls = automap::autofitVariogram(formula = formula,
-                                            input_data = sp_df, 
-                                            model = c("Mat", "Exp"),
-                                            kappa = c(0.1, 0.2),
-                                            fix.values = c(0, NA, NA),
-                                            GLS.model = resid_vmf["var_model"]$var_model)
+  #resid_vmf_gls = automap::autofitVariogram(formula = formula,
+  #                                          input_data = sp_df, 
+  #                                          model = c("Mat", "Exp"),
+  #                                          kappa = c(0.1, 0.2),
+  #                                          fix.values = c(0, NA, NA),
+  #                                          GLS.model = resid_vmf["var_model"]$var_model)
   # Return variogram model and training data
-  return_list = list(model = resid_vmf_gls["var_model"]$var_model, 
+  return_list = list(model = resid_vmf["var_model"]$var_model, 
                      train_data = sp_df)
   return(return_list)
 }
@@ -409,8 +400,6 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-# Future for parallelization
-#future::plan(future.callr::callr, workers = 10)
 sp_cv_UK = sperrorest::sperrorest(formula = fo_lm, data = d, 
                                   coords = c("X","Y"), 
                                   model_fun = vmf_fun, 
@@ -624,50 +613,6 @@ plot(dmer[[1]]$dist, dmer[[1]]$cgeschw, type = "l", xlab = "distance",
 ################################################################################
 ## Test area
 ################################################################################
-
-####
-## Explore the relationship between buffer distance and RMSE
-##
-
-# Start time measurement
-start_time = Sys.time()
-print(start_time)
-
-# Setup backend to use many processors
-totalCores = parallel::detectCores()
-
-# Leave two cores to reduce computer load
-cluster = parallel::makeCluster(totalCores[1]-2) 
-doParallel::registerDoParallel(cluster)
-
-# explore
-test = data.frame(seq(0, 20000, 1000))
-
-test2 = foreach::foreach(i = iter(test, by="row"), .combine=c, 
-                 .packages = c("sperrorest", "sp", "automap", "gstat")) %dopar%{
-  sp_cv_UK = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"), 
-                                    model_fun = vmf_fun, 
-                                    pred_fun = UK_pred_fun,
-                                    pred_args = list(formula = fo),
-                                    smp_fun = partition_loo, 
-                                    smp_args = list(buffer = i),
-                                    mode_rep = "loop", 
-                                    mode_fold = "loop")
-    
-  test_RMSE = sp_cv_UK$error_rep$test_rmse
-  }
-
-plot(test2~test[ ,1])
-
-# Stop cluster
-parallel::stopCluster(cluster)
-
-# End time measurement
-end_time = Sys.time()
-bygone_time = end_time - start_time
-##
-## End (explore the relationship between buffer distance and RMSE)
-####
 ################################################################################
 ## End (test area)
 ################################################################################

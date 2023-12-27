@@ -3,16 +3,7 @@
 ################################################################################
 # Load necessary packages
 library("pacman")
-p_load("sp")
-p_load("sf")
-p_load("terra")
 p_load("sperrorest")
-p_load("purrr")
-p_load("parallel")
-p_load("doParallel")
-p_load("foreach")
-p_load("future")
-
 p_load("meteo")
 
 # Additional functions that are not included in packages
@@ -44,7 +35,6 @@ n_perm = 10
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
 
-## Auto preparation
 # Set partition function and sample arguments 
 if (tolerance == "all"){
   partition_fun = partition_loo
@@ -69,7 +59,6 @@ for (i in 1:nchar(fo_chr[[3]])){
    count = count + 1 
   }
 }
-mtry_n = round(sqrt(count))
 
 # Observation column
 obs_col = "bcNitrate"
@@ -104,7 +93,7 @@ d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
 ## 
 
 # Create model function 
-RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s, mtry_n){
+RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s){
   # Create model
   RFSI_model = meteo::rfsi(formula = formula,
                       data = data,
@@ -117,7 +106,6 @@ RFSI_fun = function(formula, data, data.staid.x.y.z, c_r_s, mtry_n){
                       oob.error = FALSE,
                       num.trees = 500,
                       sample.fraction = 1,
-                      mtry = mtry_n,
                       min.node.size = 5,
                       min.bucket = 1,
                       max.depth = 0,
@@ -153,14 +141,11 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-# Future for parallelization
-future::plan(future.callr::callr, workers = 10)
 sp_cv_RFSI = sperrorest::sperrorest(formula = fo_RF, data = d, 
                                     coords = c("X","Y"), 
                                     model_fun = RFSI_fun,
                                     model_args = list(c_r_s = c_r_s,
-                                      data.staid.x.y.z=d.staid.x.y.z,
-                                      mtry_n = mtry_n),
+                                      data.staid.x.y.z=d.staid.x.y.z),
                                     pred_fun = RFSI_pred_fun,
                                     pred_args = list(obs_col=obs_col, 
                                                      c_r_s = c_r_s,

@@ -4,7 +4,6 @@
 # Load necessary packages
 library("pacman")
 p_load("sperrorest")
-p_load("future")
 p_load("ranger")
 
 # Additional functions that are not included in packages
@@ -43,9 +42,8 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
-imp_vars_RF = all.vars(fo)[-1]
+imp_vars_bRF = all.vars(fo)[-1]
 
-## Auto preparation
 # Set partition function and sample arguments 
 if (tolerance == "all"){
   partition_fun = partition_loo
@@ -93,8 +91,6 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-# Future for parallelization
-#future::plan(future.callr::callr, workers = 10)
 sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"), 
                                   model_fun = lm_fun, 
                                   pred_fun = lm_pred_fun,
@@ -161,7 +157,7 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d,
                                   smp_args = smp_args,
                                   importance = TRUE, 
                                   imp_permutations = n_perm,
-                                  imp_variables = imp_vars_RF,
+                                  imp_variables = imp_vars_bRF,
                                   imp_sample_from = "all",
                                   distance = TRUE)
 

@@ -3,51 +3,47 @@
 ################################################################################
 # Load necessary packages
 library("pacman")
-p_load("sp")
-p_load("sf")
-p_load("terra")
 p_load("sperrorest")
-p_load("purrr")
-p_load("parallel")
-p_load("doParallel")
-p_load("foreach")
-p_load("future")
-
 p_load("RandomForestsGLS")
 
 # Additional functions that are not included in packages
 source("auxiliary_functions.R", encoding = "UTF-8")
-source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data (for now use a subset)
-load("Data/NuM_L_sub_4.rda")
-d = sub_subset
+# Load data and formula
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_4_prediction_area.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
+pd_df = info_d_WuS_SuB$predDist_df
+mean_pd = mean(pd_df$lyr.1)
+med_pd = median(pd_df$lyr.1)
 
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = third_quartile
-max_pd = info_pd$max_predDist
-mean_pd = info_pd$mean_predDist
-sd_pd = info_pd$sd_predDist
-med_pd = info_pd$med_predDist
-mad_pd = info_pd$mad_predDist
+# Set buffer 
+buffer = 1
 
-# Adjusted formula
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y)
+# Set tolerance (all = partition_loo with buffer)
+tolerance = 1
+
+# Set number of permutations 
+n_perm = 0
+
+# Calculate importance for these variables
+imp_vars_RF = all.vars(fo_RF)[-1]
+
+## Auto preparation
+# Set partition function and sample arguments 
+if (tolerance == "all"){
+  partition_fun = partition_loo
+  smp_args = list(buffer = buffer)
+} else{
+  partition_fun = partition_tt_dist
+  smp_args = list(buffer = buffer, tolerance = tolerance)
+}
 
 ####
 ## Data and model argument preparation
@@ -60,13 +56,15 @@ obs_col = "bcNitrate"
 
 # Covariate columns
 covari_columns = c("crestime", "cgwn", "cgeschw", "log10carea", "elevation",
-                   "cAckerland", "log10_gwn", "agrum_log10_restime", 
+                   "nfk", "humus", "cAckerland", "log10_gwn", 
+                   "agrum_log10_restime", "agrum_log10_gwn", "agrum_log10_geschw",
                    "Ackerland", "lbm_class_Gruenland", "lbm_class_Unbewachsen", 
-                   "lbm_class_FeuchtgebieteWasser", "lbm_class_Siedlung",
-                   "aea20_13", "aea20_6", "X", "Y")
+                   "lbm_class_FeuchtgebieteWasser", "lbm_class_Siedlung", "X", 
+                   "Y", "tc45", "tc315", "aea20_1", "aea20_2", "aea20_12", 
+                   "aea20_13")
 
 # Set random seed
-set.seed(1)
+set.seed(7)
 ##
 ## End (data and model argument preparation)
 ####
@@ -107,8 +105,8 @@ RF_GLS_fun = function(formula, data, coord_columns, obs_col, covari_columns){
     param_estimate = TRUE,
     cov.model = "exponential",
     ntree = 50,
-    mtry = round(num_of_cols/2),
-    h = 10)
+    mtry = round(num_of_cols/3),
+    h = 1)
   return(RF_GLS_M)
 }
 
@@ -133,9 +131,7 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-# Future for parallelization
-#future::plan(future.callr::callr, workers = 10)
-sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo, data = d, 
+sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d, 
                             coords = c("X","Y"), 
                             model_fun = RF_GLS_fun,
                             model_args = list(coord_columns = coord_columns,
@@ -144,8 +140,13 @@ sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo, data = d,
                             pred_fun = RF_GSL_pred_fun,
                             pred_args = list(covari_columns = covari_columns, 
                                              coord_columns = coord_columns),
-                            smp_fun = partition_loo, 
-                            smp_args = list(buffer = 0))
+                            smp_fun = partition_fun, 
+                            smp_args = smp_args,
+                            importance = FALSE, 
+                            imp_permutations = n_perm,
+                            imp_variables = NULL,
+                            imp_sample_from = "all",
+                            distance = TRUE)
 
 # Get test RMSE
 test_RMSE = sp_cv_RF_GLS$error_rep$test_rmse
@@ -154,6 +155,14 @@ test_RMSE
 # End time measurement
 end_time = Sys.time()
 bygone_time = end_time - start_time
+print(bygone_time)
+
+# Set file name 
+file_name = paste("Results/",data_set,"_sp_cv_RF_GLS_",as.character(round(buffer)),
+                  "_+", as.character(tolerance), "_", as.character(n_perm),
+                  ".rda", sep = "")
+# Save result 
+save(sp_cv_RF_GLS, bygone_time, file = file_name)
 ##
 ## End (cross validation)
 #### 

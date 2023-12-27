@@ -5,51 +5,49 @@
 library("pacman")
 p_load("sp")
 p_load("sf")
-p_load("terra")
 p_load("sperrorest")
-p_load("purrr")
-p_load("parallel")
-p_load("doParallel")
-p_load("foreach")
-p_load("future")
-
 p_load("ranger")
 p_load("gstat")       
+p_load("nlme")
 p_load("automap")
 
 # Additional functions that are not included in packages
 source("auxiliary_functions.R", encoding = "UTF-8")
-source("spdiagnostics-functions.R", encoding = "UTF-8") # Brenning 2022
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data (for now use a subset)
-load("Data/NuM_L_sub_4.rda")
-d = sub_subset
+# Load data and formula
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_4_prediction_area.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
+pd_df = info_d_WuS_SuB$predDist_df
+mean_pd = mean(pd_df$lyr.1)
+med_pd = median(pd_df$lyr.1)
 
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = third_quartile
-max_pd = info_pd$max_predDist
-mean_pd = info_pd$mean_predDist
-sd_pd = info_pd$sd_predDist
-med_pd = info_pd$med_predDist
-mad_pd = info_pd$mad_predDist
+# Set buffer 
+buffer = 0
 
-# Adjusted formula
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  cAckerland + log10_gwn + agrum_log10_restime + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y)
+# Set tolerance (all = partition_loo with buffer)
+tolerance = "all"
+
+# Set number of permutations 
+n_perm = 10
+
+# Calculate importance for these variables
+imp_vars_RF = all.vars(fo_RF)[-1]
+
+# Set partition function and sample arguments 
+if (tolerance == "all"){
+  partition_fun = partition_loo
+  smp_args = list(buffer = buffer)
+} else{
+  partition_fun = partition_tt_dist
+  smp_args = list(buffer = buffer, tolerance = tolerance)
+}
 
 ####
 ## Model argument preparation
@@ -77,27 +75,6 @@ obs_col = "bcNitrate"
 ################################################################################
 ## RF-oob-OK spatial leave one out cross validation 
 ################################################################################
-#####
-## Get information about the prediction distance 
-## 
-info_pd = info_predDist(path_predArea = "Data/NuM_L_sub_2_prediction_area.gpkg", 
-                        dataPoints_df = d,
-                        c_r_s = "EPSG:25832",
-                        resolution = 100,
-                        xy = c("X", "Y"))
-
-pd_df = info_pd$predDist_df
-hist(pd_df$lyr.1)
-third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
-tq_pd = third_quartile
-max_pd = info_pd$max_predDist
-mean_pd = info_pd$mean_predDist
-sd_pd = info_pd$sd_predDist
-med_pd = info_pd$med_predDist
-mad_pd = info_pd$mad_predDist
-##
-## End (get 
-
 
 ####
 ## Cross validation
@@ -107,7 +84,8 @@ mad_pd = info_pd$mad_predDist
 RF_fun = function(formula, data, obs_col){
   # Create RF model
   RF_model = ranger::ranger(formula = formula, 
-                            data = data)
+                            data = data,
+                            seed = 7)
   # Calculate the oob residuals and add them to the df
   data$oob_resi = data[, obs_col] - RF_model$predictions
   # Return RF model and training data
@@ -129,10 +107,9 @@ RF_oob_OK_pred_fun = function(object, newdata){
   # Fit variogram model
   resid_vm = automap::autofitVariogram(formula = oob_resi ~ 1,
                                        input_data = sp_df_train,
-                                       model = c("Sph"))
-                                       #model = c("Mat", "Exp", "Sph"),
-                                       #kappa = c(0.1,0.2,0.3),
-                                       #fix.values = c(0, NA, NA))
+                                       model = c("Mat", "Exp"),
+                                       kappa = c(0.1,0.2),
+                                       fix.values = c(0, NA, NA))
   # Get the model
   resid_vmm = resid_vm["var_model"]$var_model
   # Create a spatial points df 
@@ -153,23 +130,34 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-# Future for parallelization
-future::plan(future.callr::callr, workers = 10)
-sp_cv_RFOK = sperrorest::sperrorest(formula = fo, data = d, 
+sp_cv_RF_oob_OK = sperrorest::sperrorest(formula = fo_RF, data = d, 
                                     coords = c("X","Y"), 
                                     model_fun = RF_fun,
                                     model_args = list(obs_col=obs_col),
                                     pred_fun = RF_oob_OK_pred_fun,
-                                    smp_fun = partition_loo, 
-                                    smp_args = list(buffer=med_pd))
+                                    smp_fun = partition_fun, 
+                                    smp_args = smp_args,
+                                    importance = TRUE, 
+                                    imp_permutations = n_perm,
+                                    imp_variables = imp_vars_RF,
+                                    imp_sample_from = "all",
+                                    distance = TRUE)
 
 # Get test RMSE
-test_RMSE = sp_cv_RFOK$error_rep$test_rmse
+test_RMSE = sp_cv_RF_oob_OK$error_rep$test_rmse
 test_RMSE
 
 # End time measurement
 end_time = Sys.time()
 bygone_time = end_time - start_time
+print(bygone_time)
+
+# Set file name 
+file_name = paste("Results/",data_set,"_sp_cv_RF_oob_OK_",as.character(round(buffer)),
+                  "_+", as.character(tolerance), "_", as.character(n_perm),
+                  ".rda", sep = "")
+# Save result 
+save(sp_cv_RF_oob_OK, bygone_time, file = file_name)
 ##
 ## End (cross validation)
 #### 

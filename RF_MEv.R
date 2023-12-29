@@ -38,8 +38,9 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                        agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                        lbm_class_Gruenland + lbm_class_Unbewachsen + 
                        lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
-                       tc45 + tc315 + V1 + V2 + V3 + 
+                       tc45 + tc315 + V1 + V2 + V3 +
                        aea20_1 + aea20_2 + aea20_12 + aea20_13)
+
 # Calculate importance for these variables
 imp_vars_RF_MEv = all.vars(fo)[-1]
 
@@ -94,7 +95,6 @@ RF_MEv_fun = function(formula, data, fo_fp){
   # Create second part of the model formula and complete the formula
   fo_sp = paste(colnames(Evec_df), collapse="+")
   fo_c = as.formula(paste(fo_fp, fo_sp))
-  return(fo_c)
   # Create RF model
   RF_model = ranger::ranger(formula = fo_c, 
                             data = c_data,

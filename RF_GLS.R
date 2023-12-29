@@ -34,6 +34,8 @@ n_perm = 0
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL # this sets importance calculation to false if it is not 
+                   # set to true
 
 ## Auto preparation
 # Set partition function and sample arguments 
@@ -106,7 +108,7 @@ RF_GLS_fun = function(formula, data, coord_columns, obs_col, covari_columns){
     cov.model = "exponential",
     ntree = 50,
     mtry = round(num_of_cols/3),
-    h = 1)
+    h = 10)
   return(RF_GLS_M)
 }
 
@@ -142,9 +144,8 @@ sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d,
                                              coord_columns = coord_columns),
                             smp_fun = partition_fun, 
                             smp_args = smp_args,
-                            importance = FALSE, 
                             imp_permutations = n_perm,
-                            imp_variables = NULL,
+                            imp_variables = imp_vars_RF,
                             imp_sample_from = "all",
                             distance = TRUE)
 

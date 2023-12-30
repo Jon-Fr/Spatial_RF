@@ -35,7 +35,6 @@ n_perm = 0
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
 
-## Auto preparation
 # Set partition function and sample arguments 
 if (tolerance == "all"){
   partition_fun = partition_loo
@@ -160,6 +159,10 @@ sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d,
                                              coord_columns = coord_columns),
                             smp_fun = partition_fun, 
                             smp_args = smp_args,
+                            importance = TRUE, 
+                            imp_permutations = n_perm,
+                            imp_variables = imp_vars_RF,
+                            imp_sample_from = "all",
                             distance = TRUE)
 
 # Get test RMSE
@@ -182,34 +185,4 @@ save(sp_cv_RF_GLS, bygone_time, file = file_name)
 #### 
 ################################################################################
 ## End (RF-GLS spatial leave one out cross validation) 
-################################################################################
-
-
-################################################################################
-## Test area
-################################################################################
-resamp = partition_loo(data = d, ndisc = nrow(d), replace = FALSE, 
-                       coords = c("X","Y"), buffer = med_pd, 
-                       repetition = 1)
-
-id_train = resamp[["1"]][[150]]$train
-id_test = resamp[["1"]][[150]]$test
-
-# Start time measurement
-start_time = Sys.time()
-
-train_df = d[id_train, ]
-test_df = d[id_test, ]
-
-a = RF_GLS_fun(formula = fo, data = train_df, coord_columns = coord_columns, obs_col = obs_col, 
-               covari_columns = covari_columns)
-
-b = RF_GSL_pred_fun(object = a, newdata = test_df, covari_columns = covari_columns, coord_columns = coord_columns)
-
-# End time measurement
-end_time = Sys.time()
-print("bygone time")
-print(end_time - start_time)
-################################################################################
-## End (test area)
 ################################################################################

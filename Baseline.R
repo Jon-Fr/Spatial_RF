@@ -24,10 +24,10 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 100
+buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+tolerance = "all"
 
 # Set number of permutations 
 n_perm = 10
@@ -149,7 +149,7 @@ print(start_time)
 # Perform the spatial cross-validation
 # Future for parallelization
 #future::plan(future.callr::callr, workers = 10)
-sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d, 
+sp_cv_bRF = sperrorest::sperrorest(formula = fo, data = d, 
                                   coords = c("X","Y"), 
                                   model_fun = RF_fun, 
                                   pred_fun = RF_pred_fun,
@@ -162,7 +162,7 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo, data = d,
                                   distance = TRUE)
 
 # Get test RMSE
-test_RMSE = sp_cv_RF$error_rep$test_rmse
+test_RMSE = sp_cv_bRF$error_rep$test_rmse
 test_RMSE
 
 # End time measurement
@@ -175,7 +175,7 @@ file_name = paste("Results/", data_set, "_sp_cv_bRF_", as.character(round(buffer
                   "_+", as.character(tolerance), "_", as.character(n_perm), 
                   ".rda", sep = "")
 # Save result 
-save(sp_cv_RF, bygone_time, file = file_name)
+save(sp_cv_bRF, bygone_time, file = file_name)
 ##
 ## End (RMSE of a random forest model without coordinates as ...) 
 #### 

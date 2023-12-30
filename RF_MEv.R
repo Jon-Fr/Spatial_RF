@@ -53,7 +53,6 @@ if (tolerance == "all"){
   smp_args = list(buffer = buffer, tolerance = tolerance)
 }
 
-
 # Set first part of the model formula 
 fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
@@ -159,12 +158,4 @@ save(sp_cv_RF_MEv, bygone_time, file = file_name)
 #### 
 ################################################################################
 ## End (RF-MEv spatial leave one out cross validation) 
-################################################################################
-
-
-################################################################################
-## Test area
-################################################################################
-################################################################################
-## End (test area)
 ################################################################################

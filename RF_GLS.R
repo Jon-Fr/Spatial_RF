@@ -34,8 +34,6 @@ n_perm = 0
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
-imp_vars_RF = NULL # this sets importance calculation to false if it is not 
-                   # set to true
 
 ## Auto preparation
 # Set partition function and sample arguments 
@@ -104,7 +102,7 @@ RF_GLS_fun = function(formula, data, coord_columns, obs_col, covari_columns){
     coords = coordinates_matrix,
     X = covariates_matrix,
     y = observations,
-    param_estimate = TRUE,
+    param_estimate = FALSE,
     cov.model = "exponential",
     ntree = 50,
     mtry = round(num_of_cols/3),
@@ -132,6 +130,24 @@ RF_GSL_pred_fun = function(object, newdata, covari_columns, coord_columns){
 start_time = Sys.time()
 print(start_time)
 
+i = 237
+
+test = RF_GLS_fun(formula = fo_RF, data = d[-c(i),], 
+                  coord_columns = coord_columns, covari_columns = covari_columns,
+                  obs_col = obs_col)
+
+end_time = Sys.time()
+bygone_time = end_time - start_time
+print(bygone_time)
+
+test1 = RF_GSL_pred_fun(object = test, newdata = d[i,], 
+                        coord_columns = coord_columns, 
+                        covari_columns = covari_columns)
+
+end_time = Sys.time()
+bygone_time = end_time - start_time
+print(bygone_time)
+
 # Perform the spatial cross-validation
 sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d, 
                             coords = c("X","Y"), 
@@ -144,9 +160,6 @@ sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d,
                                              coord_columns = coord_columns),
                             smp_fun = partition_fun, 
                             smp_args = smp_args,
-                            imp_permutations = n_perm,
-                            imp_variables = imp_vars_RF,
-                            imp_sample_from = "all",
                             distance = TRUE)
 
 # Get test RMSE

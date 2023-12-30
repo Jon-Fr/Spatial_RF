@@ -1,3 +1,12 @@
+source("auxiliary_functions.R", encoding = "UTF-8")
+
+# Number of potions with prediction distance between ... and ...
+
+load("Data/WuS_SuB.rda")
+
+n_p = partition_tt_dist(data = WuS_SuB, coords = c("X", "Y"), buffer = 3600, 
+                        tolerance = 100)
+
 # Calculate mean prediction distance
 test1 = sp_cv_MLR$error_fold[[1]][[1]]$distance
 

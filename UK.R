@@ -68,7 +68,7 @@ if (tolerance == "all"){
 ## UK preliminary analyses for NuM_L dataset
 ################################################################################
 pA = FALSE
-if (pa){
+if (pA){
   ##### 
   ## Directional semivariograms and multiple linear regression
   ## 
@@ -213,7 +213,7 @@ if (pa){
 ## UK preliminary analyses for Wus_SuB dataset
 ################################################################################
 pA = FALSE
-if (pa){
+if (pA){
   ##### 
   ## Directional semivariograms and multiple linear regression
   ## 
@@ -372,7 +372,6 @@ vmf_fun = function(formula, data){
                                         model = c("Mat", "Exp"),
                                         kappa = c(0.1, 0.2),
                                         fix.values = c(0, NA, NA))
-
   # GLS residual variogram model fitting
   #resid_vmf_gls = automap::autofitVariogram(formula = formula,
   #                                          input_data = sp_df, 

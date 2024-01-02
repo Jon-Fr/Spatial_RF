@@ -24,22 +24,32 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 0
+buffer = 100
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
 n_perm = 10
 
-# Set formula
+# Set formula D1, D2, D3 are dummy variables
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                        nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                        agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                        lbm_class_Gruenland + lbm_class_Unbewachsen + 
                        lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
-                       tc45 + tc315 + V1 + V2 + V3 +
+                       tc45 + tc315 + D1 + D2 + D3 +
                        aea20_1 + aea20_2 + aea20_12 + aea20_13)
+
+# Since the eigenvectors are calculated in the model function or in the 
+# prediction function (for newdata), but the permutation of the values for 
+# calculating the VI takes place outside of these functions, dummy 
+# variables are required to estimate the VI for the eigenvectors.
+d$D1 = 1:nrow(d)
+d$D2 = 1:nrow(d)
+d$D3 = 1:nrow(d)
+
+d$checkD = 1:nrow(d)
 
 # Calculate importance for these variables
 imp_vars_RF_MEv = all.vars(fo)[-1]
@@ -99,9 +109,10 @@ RF_MEv_fun = function(formula, data, fo_fp){
                             data = c_data,
                             oob.error = FALSE,
                             seed = 7)
-  # Return the model as well as the MEvEv. The MEvEv are required to estimates 
-  # the Moran eigenvectors at unobserved sitess
-  r_l = list("model" = RF_model, "MEvEv" = MEvEv)
+  # Return the model, the MEvEv and the eigenvector df. 
+  # The MEvEv are required to estimates the Moran eigenvectors at unobserved 
+  # sites. The eigenvector df is required for the PVI assessment. 
+  r_l = list("model" = RF_model, "MEvEv" = MEvEv, "Evec_df" = Evec_df)
   return(r_l)
 }
 
@@ -114,6 +125,18 @@ RF_MEv_pred_fun = function(object, newdata){
   # Store eigenvectors in a df and combine it with the newdata df
   Evec_ndf = as.data.frame(MEvEv_n$sf)
   c_newdata = cbind(newdata, Evec_ndf)
+  # Check if one of the dummy variables was permuted if it was permute the value
+  # of the corresponding eigenvector
+  return(sample(object$Evec_df$V1, 1))
+  if (!identical(newdata$checkD, newdata$D1)){
+    c_newdata$V1 = sample(object$Evec_df$V1, 1)
+  }
+  if (!identical(newdata$checkD, newdata$D2)){
+    c_newdata$V2 = sample(object$Evec_df$V2, 1)
+  }
+  if (!identical(newdata$checkD, newdata$D3)){
+    c_newdata$V3 = sample(object$Evec_df$V3, 1)
+  }
   # RF prediction
   RF_prediction = predict(object = object$model,
                           data = c_newdata)

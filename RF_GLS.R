@@ -30,7 +30,7 @@ buffer = 1
 tolerance = 1
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]

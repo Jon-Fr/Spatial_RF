@@ -25,13 +25,13 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 100
+buffer = 1
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+tolerance = 1
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 20
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
@@ -96,7 +96,8 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_RF,
                                   imp_sample_from = "all",
-                                  distance = TRUE)
+                                  distance = TRUE,
+                                  verbose = 1)
 
 # Get test RMSE
 test_RMSE = sp_cv_RF$error_rep$test_rmse

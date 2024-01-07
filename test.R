@@ -37,11 +37,13 @@ mean(nn_distances)
 
 
 # Load result
-file_name = "WuS_SuB_sp_cv_RF_0_+50_10.rda"
-load(paste("Results/",file_name, sep = ""))
+file_name = "WuS_SuB_sp_cv_RFSI_0_+all_0.rda"
+load(paste("Results/Wus_SuB/",file_name, sep = ""))
 
-test_RMSE = sp_cv_RF$error_rep$test_rmse
-imp <- summary(sp_cv_RF$importance)
+print(bygone_time)
+
+test_RMSE = sp_cv_MLR$error_rep$test_rmse
+imp <- summary(sp_cv_MLR$importance)
 
 # Create a barplot - looks better with greater importance at the top:
 imp <- imp[order(imp$mean.rmse, decreasing = TRUE),]
@@ -52,3 +54,55 @@ barplot(imp$mean.rmse, names.arg = rownames(imp), horiz = TRUE, las = 1,
 test_RMSE
 bygone_time
 
+
+################################################################################
+# Test importance
+################################################################################
+library("pacman")
+p_load("sperrorest")
+
+voi = c(1:1000)
+imp_var1 = sqrt(voi) 
+random_vec = runif(1000, min = -5, max = 5)
+imp_var2 = voi^2 + random_vec
+random_var1 = runif(1000, min = -5, max = 5)
+random_var2 = runif(1000, min = 0, max = 100)
+X = runif(1000, min = 0, max = 1)
+Y = runif(1000, min = 0, max = 1)
+d = data.frame(voi, imp_var1, imp_var2, random_var1, random_var2, X, Y)
+
+fo_lm = as.formula(voi ~ imp_var1 + imp_var2 + random_var1 + random_var2)
+imp_vars_lm = all.vars(fo_lm)[-1]
+
+# Create model function 
+lm_fun = function(formula, data){
+  lm_m = lm(formula, data)
+  return(lm_m)
+}
+
+# Create prediction function
+lm_pred_fun = function(object, newdata){
+  predi = predict(object = object, newdata = newdata)
+  return(predi)
+}
+
+# Perform the spatial cross-validation
+sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"), 
+                                   model_fun = lm_fun, 
+                                   pred_fun = lm_pred_fun,
+                                   smp_fun = partition_loo, 
+                                   smp_args = list(buffer = 0),
+                                   importance = TRUE, 
+                                   imp_permutations = 10,
+                                   imp_variables = imp_vars_lm,
+                                   imp_sample_from = "all",
+                                   distance = FALSE)
+################################################################################
+# End (test importance)
+################################################################################
+
+e = as.Date("2024-05-12")
+c = as.Date("2024-01-06")
+
+d = e - c
+d

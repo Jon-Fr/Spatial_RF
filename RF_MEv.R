@@ -24,13 +24,13 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 100
+buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+tolerance = "all"
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
 
 # Set formula D1, D2, D3 are dummy variables
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
@@ -53,6 +53,7 @@ d$checkD = 1:nrow(d)
 
 # Calculate importance for these variables
 imp_vars_RF_MEv = all.vars(fo)[-1]
+imp_vars_RF_MEv = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -155,7 +156,6 @@ sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo, data = d,
                                       pred_fun = RF_MEv_pred_fun,
                                       smp_fun = partition_fun, 
                                       smp_args = smp_args,
-                                      importance = TRUE, 
                                       imp_permutations = n_perm,
                                       imp_variables = imp_vars_RF_MEv,
                                       imp_sample_from = "all",

@@ -31,13 +31,13 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 100
+buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+tolerance = "all"
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -60,6 +60,7 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 
 # Calculate importance for these variables
 imp_vars_llo_OK_RF = all.vars(fo)[-1]
+imp_vars_llo_OK_RF = NULL
 
 ok_fo = as.formula(bcNitrate ~ 1)
 ##
@@ -132,7 +133,7 @@ totalCores = parallel::detectCores()
 sc = 1
 
 # Leave some cores to reduce computer load
-cluster = parallel::makeCluster(totalCores-5) 
+cluster = parallel::makeCluster(sc) 
 doParallel::registerDoParallel(cluster)
 
 # Execute llo-OK function
@@ -190,7 +191,6 @@ sp_cv_llo_OK_RF = sperrorest::sperrorest(formula = fo, data = d,
                                   pred_fun = RF_pred_fun,
                                   smp_fun = partition_fun, 
                                   smp_args = smp_args,
-                                  importance = TRUE, 
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_llo_OK_RF,
                                   imp_sample_from = "all",

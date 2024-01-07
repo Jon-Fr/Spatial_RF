@@ -24,16 +24,17 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 100
+buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+tolerance = "all"
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -153,7 +154,6 @@ sp_cv_RFSI = sperrorest::sperrorest(formula = fo_RF, data = d,
                                                        d.staid.x.y.z),
                                     smp_fun = partition_fun, 
                                     smp_args = smp_args,
-                                    importance = TRUE, 
                                     imp_permutations = n_perm,
                                     imp_variables = imp_vars_RF,
                                     imp_sample_from = "all",

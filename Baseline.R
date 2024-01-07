@@ -30,7 +30,7 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
 
 # Formula for base RF-model
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
@@ -42,7 +42,9 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
+imp_vars_lm = NULL
 imp_vars_bRF = all.vars(fo)[-1]
+imp_vars_bRF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -96,7 +98,6 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"
                                   pred_fun = lm_pred_fun,
                                   smp_fun = partition_fun, 
                                   smp_args = smp_args,
-                                  importance = TRUE, 
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_lm,
                                   imp_sample_from = "all",
@@ -155,7 +156,6 @@ sp_cv_bRF = sperrorest::sperrorest(formula = fo, data = d,
                                   pred_fun = RF_pred_fun,
                                   smp_fun = partition_fun, 
                                   smp_args = smp_args,
-                                  importance = TRUE, 
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_bRF,
                                   imp_sample_from = "all",

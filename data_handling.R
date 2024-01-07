@@ -47,7 +47,7 @@ spv_dp = terra::vect(d, geom=c("X", "Y"))
 terra::crs(spv_dp) <- "EPSG:25832"
 
 # Write file
-terra::writeVector(spv_dp, "Data/data_points.gpkg", overwrite = TRUE)
+terra::writeVector(spv_dp, "Data/_points.gpkg", overwrite = TRUE)
 ##
 ## End (export all data points)
 ####

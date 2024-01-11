@@ -12,7 +12,7 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data and formula 
+# Load data and formula
 data_set = "WuS_SuB"
 load("Data/WuS_SuB.rda")
 d = WuS_SuB

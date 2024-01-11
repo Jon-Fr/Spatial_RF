@@ -10,7 +10,7 @@ n_p_vec_n_ = c()
 buffer_vec = c(0, 100, 400, 900, 1600, 3600, 6400, 10000, 16900, 25600, 40000)
 tolerance_vec = c(50, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100)
 
-for (i in 10:length(buffer_vec)){
+for (i in 1:length(buffer_vec)){
   print(buffer_vec[i])
   # WuS_SuB
   n_p_w_ = partition_tt_dist(data = WuS_SuB, coords = c("X", "Y"), 
@@ -37,13 +37,11 @@ mean(nn_distances)
 
 
 # Load result
-file_name = "WuS_SuB_sp_cv_RFSI_0_+all_0.rda"
-load(paste("Results/Wus_SuB/",file_name, sep = ""))
+file_name = "NuM_L_sp_cv_RF_0_+50_10.rda"
+load(paste("Results/",file_name, sep = ""))
 
-print(bygone_time)
-
-test_RMSE = sp_cv_MLR$error_rep$test_rmse
-imp <- summary(sp_cv_MLR$importance)
+test_RMSE = sp_cv_RF$error_rep$test_rmse
+imp <- summary(sp_cv_RF$importance)
 
 # Create a barplot - looks better with greater importance at the top:
 imp <- imp[order(imp$mean.rmse, decreasing = TRUE),]

@@ -14,12 +14,12 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
 
 # Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
+pd_df = info_d_NuM_L$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
@@ -30,7 +30,7 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Set formula D1, D2, D3 are dummy variables
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
@@ -39,7 +39,7 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                        lbm_class_Gruenland + lbm_class_Unbewachsen + 
                        lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
                        tc45 + tc315 + D1 + D2 + D3 +
-                       aea20_1 + aea20_2 + aea20_12 + aea20_13)
+                       aea20_2 + aea20_8 + aea20_12)
 
 # Since the eigenvectors are calculated in the model function or in the 
 # prediction function (for newdata), but the permutation of the values for 
@@ -53,7 +53,6 @@ d$checkD = 1:nrow(d)
 
 # Calculate importance for these variables
 imp_vars_RF_MEv = all.vars(fo)[-1]
-imp_vars_RF_MEv = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -70,7 +69,7 @@ fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
-                  tc45 +  tc315 + aea20_1 + aea20_2 + aea20_12 + aea20_13 +"
+                  tc45 +  tc315 + aea20_2 + aea20_8 + aea20_12 +"
 ################################################################################
 ## End (preparation)
 ################################################################################

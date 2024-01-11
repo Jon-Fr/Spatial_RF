@@ -212,7 +212,7 @@ if (pA){
 ################################################################################
 ## UK preliminary analyses for Wus_SuB dataset
 ################################################################################
-pA = FALSE
+pA = TRUE
 if (pA){
   ##### 
   ## Directional semivariograms and multiple linear regression

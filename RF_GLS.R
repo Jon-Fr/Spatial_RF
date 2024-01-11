@@ -24,10 +24,10 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 1
+buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 1
+tolerance = "all"
 
 # Set number of permutations 
 n_perm = 10
@@ -105,7 +105,7 @@ RF_GLS_fun = function(formula, data, coord_columns, obs_col, covari_columns){
     cov.model = "exponential",
     ntree = 50,
     mtry = round(num_of_cols/3),
-    h = 10)
+    h = 1)
   return(RF_GLS_M)
 }
 
@@ -125,11 +125,11 @@ RF_GSL_pred_fun = function(object, newdata, covari_columns, coord_columns){
   return(prediction)
 }
 
-# Start time measurement
+# Test
 start_time = Sys.time()
 print(start_time)
 
-i = 237
+i = 1230
 
 test = RF_GLS_fun(formula = fo_RF, data = d[-c(i),], 
                   coord_columns = coord_columns, covari_columns = covari_columns,
@@ -147,8 +147,12 @@ end_time = Sys.time()
 bygone_time = end_time - start_time
 print(bygone_time)
 
+# Start time measurement
+start_time = Sys.time()
+print(start_time)
+
 # Perform the spatial cross-validation
-sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d, 
+sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d[1:200,], 
                             coords = c("X","Y"), 
                             model_fun = RF_GLS_fun,
                             model_args = list(coord_columns = coord_columns,

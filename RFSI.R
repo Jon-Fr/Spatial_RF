@@ -48,9 +48,7 @@ if (tolerance == "all"){
 ####
 ## Data and model argument preparation
 ##
-## Get mtry value
-# Get number of explanatory variables
-# formula to character
+# Formula to character
 fo_chr = as.character(fo_RF)
 # count number of +, add 1
 count = 1

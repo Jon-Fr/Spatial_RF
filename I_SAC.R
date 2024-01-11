@@ -62,12 +62,12 @@ MLR_model = lm(fo_lm, data=d)
 sp_df$mlr_resi = MLR_model$residuals
 
 # Full distance
-emp_svario_resi_fd = gstat::variogram(bcNitrate~1, data=sp_df, cutoff = max_pd, 
+emp_svario_resi_fd = gstat::variogram(mlr_resi~1, data=sp_df, cutoff = max_pd, 
                                       width = 1000)  
-plot(emp_svario_resi_fd$dist, emp_svario_resi_fd$gamma)
+plot(emp_svario_resi_fd$dist, emp_svario_resi_fd$gamma, main="West und Süddeutsches ...", xlab="Entfernung in Meter", ylab="Semivarianz")
 
 # Short distance (median predction distance)
-emp_svario_resi_sd = gstat::variogram(bcNitrate~1, data=sp_df, cutoff = med_pd, 
+emp_svario_resi_sd = gstat::variogram(mlr_resi~1, data=sp_df, cutoff = med_pd, 
                                       width = 100) 
 plot(emp_svario_resi_sd$dist, emp_svario_resi_sd$gamma)
 ##

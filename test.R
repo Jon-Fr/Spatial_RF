@@ -37,11 +37,11 @@ mean(nn_distances)
 
 
 # Load result
-file_name = "NuM_L_sp_cv_RF_0_+50_10.rda"
+file_name = "NuM_L_sp_cv_RF_MEv_40000_+100_10.rda"
 load(paste("Results/",file_name, sep = ""))
 
-test_RMSE = sp_cv_RF$error_rep$test_rmse
-imp <- summary(sp_cv_RF$importance)
+test_RMSE = sp_cv_OK_RF$error_rep$test_rmse
+imp <- summary(sp_cv_OK_RF$importance)
 
 # Create a barplot - looks better with greater importance at the top:
 imp <- imp[order(imp$mean.rmse, decreasing = TRUE),]

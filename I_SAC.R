@@ -14,9 +14,13 @@ options("scipen"= 999, "digits"=4)
 load("Data/WuS_SuB.rda")
 d = WuS_SuB
 fo_lm = fo_lm_WuS_SuB
-  
+
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_lm = fo_lm_NuM_L
+
 # Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
+pd_df = info_d_NuM_L$predDist_df
 hist(pd_df$lyr.1)
 third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
 tq_pd = third_quartile
@@ -34,13 +38,14 @@ sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
 ################################################################################
 ## Investigation of the spatial autocorrelation)
 ################################################################################
-
+d$subMittelwert
+d$bcNitrate
 ####
 ## Empirical semivariogram (EmSv) of the variable of interest
 ##
 # Full distance (maximal prediction distance)
-emp_svario_fd = gstat::variogram(bcNitrate~1, data=sp_df, cutoff = max_pd,  
-                                 width = 1000) 
+emp_svario_fd = gstat::variogram(fo_lm, data=sp_df, cutoff = max_pd,  
+                                 width = 1000)
 plot(emp_svario_fd$dist, emp_svario_fd$gamma)
 
 # Short distance (median prediction distance)
@@ -64,7 +69,7 @@ sp_df$mlr_resi = MLR_model$residuals
 # Full distance
 emp_svario_resi_fd = gstat::variogram(mlr_resi~1, data=sp_df, cutoff = max_pd, 
                                       width = 1000)  
-plot(emp_svario_resi_fd$dist, emp_svario_resi_fd$gamma, main="West und Süddeutsches ...", xlab="Entfernung in Meter", ylab="Semivarianz")
+plot(emp_svario_resi_fd$dist, emp_svario_resi_fd$gamma)
 
 # Short distance (median predction distance)
 emp_svario_resi_sd = gstat::variogram(mlr_resi~1, data=sp_df, cutoff = med_pd, 

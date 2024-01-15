@@ -32,7 +32,7 @@ med_pd = median(pd_df$lyr.1)
 buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
 n_perm = 10

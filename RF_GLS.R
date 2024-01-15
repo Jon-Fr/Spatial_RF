@@ -101,7 +101,7 @@ RF_GLS_fun = function(formula, data, coord_columns, obs_col, covari_columns){
     coords = coordinates_matrix,
     X = covariates_matrix,
     y = observations,
-    param_estimate = FALSE,
+    param_estimate = TRUE,
     cov.model = "exponential",
     ntree = 50,
     mtry = round(num_of_cols/3),
@@ -152,7 +152,7 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d[1:200,], 
+sp_cv_RF_GLS = sperrorest::sperrorest(formula = fo_RF, data = d, 
                             coords = c("X","Y"), 
                             model_fun = RF_GLS_fun,
                             model_args = list(coord_columns = coord_columns,

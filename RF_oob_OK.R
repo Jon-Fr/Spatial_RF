@@ -118,7 +118,8 @@ RF_oob_OK_pred_fun = function(object, newdata){
   ok_pred = gstat::krige(formula = oob_resi ~ 1, sp_df_train, 
                          model = resid_vmm, 
                          newdata = newdata_sp_df, 
-                         debug.level = 0)
+                         debug.level = 0,
+                         nmax = 200)
   # Sum up the residual interpolation and the RF prediction
   newdata_sp_df$final_predcition = newdata_sp_df$RF_predictions + 
     ok_pred$var1.pred  

@@ -20,10 +20,11 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data
+# Load data and formula
 data_set = "WuS_SuB"
 load("Data/WuS_SuB.rda")
 d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
 pd_df = info_d_WuS_SuB$predDist_df
@@ -34,10 +35,10 @@ med_pd = median(pd_df$lyr.1)
 buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -66,9 +67,10 @@ ok_fo = as.formula(bcNitrate ~ 1)
 ## End Model argument preparation)
 ####
 
-# Calculate importance for these variables
-imp_vars_llo_OK_RF = all.vars(fo)[-1]
-imp_vars_llo_OK_RF = NULL
+# Calculate importance for these variables. The standard formula and not the 
+# adjusted formula is used because the importance of the OK variables is  
+# evaluated together with the X and Y coordinate 
+imp_vars_RF = all.vars(fo_RF)[-1]
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -90,7 +92,7 @@ imp_vars_llo_OK_RF = NULL
 ####
 ## llo-OK multicore function
 ##
-llo_OK_fun = function(data, buffer_dist, ok_fo){
+llo_OK_fun = function(data, buffer_dist, ok_fo, nno){
   # Leave one out resampling
   resamp = sperrorest::partition_loo(data = data, ndisc = nrow(data), 
                                      replace = FALSE, coords = c("X","Y"), 
@@ -121,7 +123,8 @@ llo_OK_fun = function(data, buffer_dist, ok_fo){
                       ok_pred = gstat::krige(ok_fo, train_sp_df, 
                                              model = resid_vmm, 
                                              newdata = test_sp_df,
-                                             debug.level = 0)
+                                             debug.level = 0,
+                                             nmax = nno)
                       pred = c(ok_pred$var1.pred, ok_pred$var1.var)
                     }
 }
@@ -142,7 +145,8 @@ doParallel::registerDoParallel(cluster)
 # Execute llo-OK function
 llo_ok_res = llo_OK_fun(data = d, 
                         buffer_dist = buffer, 
-                        ok_fo = ok_fo) 
+                        ok_fo = ok_fo,
+                        nno = 200) 
 
 # Stop cluster
 stopCluster(cluster)
@@ -167,18 +171,49 @@ print(bygone_time_llo_OK)
 ## Cross validation
 ## 
 
+## For the variable importance assessment it is necessary to perform the llo-OK
+## for the newdata location in the prediction function.
+
 # Create model function 
-RF_fun = function(formula, data){
+RF_lloOK_fun = function(formula, data, ok_fo){
+  ## RF model
   RF_model = ranger::ranger(formula = formula, 
                             data = data,
                             oob.error = FALSE,
                             seed = 7)
-  return(RF_model)
+  ## Variogram model
+  # Create spatial points dataframe 
+  sp_df = sp::SpatialPointsDataFrame(coords = data[,c("X","Y")], data = data)
+  # Fit variogram model
+  resid_vm = automap::autofitVariogram(formula = ok_fo, 
+                                       input_data = sp_df, 
+                                       model = c("Mat", "Exp"),
+                                       kappa = c(0.1,0.2),
+                                       fix.values = c(0, NA, NA))
+  # Create return list
+  return_list = list(RF_m = RF_model, resid_vmm = resid_vm["var_model"]$var_model, 
+                     train_data = sp_df)
+  return(return_list)
 }
 
 # Create prediction function
-RF_pred_fun = function(object, newdata){
-  RF_prediction = predict(object = object,
+RF_lloOK_pred_fun = function(object, newdata, ok_fo, nno){
+  ## llo-OK
+  # Newdata spatial points dataframe 
+  new_sp_df = sp::SpatialPointsDataFrame(coords = newdata[,c("X","Y")], 
+                                         data = newdata)
+  # OK prediction 
+  ok_pred = gstat::krige(formula = ok_fo, 
+                         locations = object$train_data, 
+                         model = object$resid_vmm, 
+                         newdata = new_sp_df,
+                         debug.level = 0,
+                         nmax = nno)
+  # Replace OK values of newdata
+  newdata$ok_inter_pred = ok_pred$var1.pred 
+  newdata$ok_inter_var = ok_pred$var1.var
+  ## RF prediction
+  RF_prediction = predict(object = object$RF_m,
                           data = newdata)
   return(RF_prediction$predictions)
 }
@@ -190,14 +225,16 @@ print(start_time)
 # Perform the spatial cross-validation
 sp_cv_llo_OK_RF = sperrorest::sperrorest(formula = fo, data = d, 
                                          coords = c("X","Y"), 
-                                  model_fun = RF_fun, 
-                                  pred_fun = RF_pred_fun,
-                                  smp_fun = partition_fun, 
-                                  smp_args = smp_args,
-                                  imp_permutations = n_perm,
-                                  imp_variables = imp_vars_llo_OK_RF,
-                                  imp_sample_from = "all",
-                                  distance = TRUE)
+                                         model_fun = RF_lloOK_fun,
+                                         model_args = list(ok_fo = ok_fo),
+                                         pred_fun = RF_lloOK_pred_fun,
+                                         pred_args = list(ok_fo = ok_fo, nno = 200),
+                                         smp_fun = partition_fun, 
+                                         smp_args = smp_args,
+                                         imp_permutations = n_perm,
+                                         imp_variables = imp_vars_RF,
+                                         imp_sample_from = "all",
+                                         distance = TRUE)
 
 # Get test RMSE
 test_RMSE = sp_cv_llo_OK_RF$error_rep$test_rmse
@@ -206,12 +243,13 @@ test_RMSE
 # End time measurement
 end_time = Sys.time()
 bygone_time = end_time - start_time
-print(bygone_time)
+print(bygone_time)  
 
 # Set file name 
 file_name = paste("Results/",data_set,"_sp_cv_llo_OK_RF_",as.character(round(buffer)),
                   "_+", as.character(tolerance), "_", as.character(n_perm),
                   ".rda", sep = "")
+
 # Save result 
 save(sp_cv_llo_OK_RF, bygone_time, bygone_time_llo_OK, file = file_name)
 ##

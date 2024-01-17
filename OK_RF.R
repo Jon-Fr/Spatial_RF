@@ -113,7 +113,8 @@ OK_RF_pred_fun = function(object, newdata, ok_fo){
   # Kriging interpolation/prediction
   ok_pred = krige(formula = ok_fo, train_sp_df, 
                   model = object$v_model, newdata = newdata_sp_df,
-                  debug.level = 0)
+                  debug.level = 0,
+                  nmax = 200)
   ok_inter = ok_pred$var1.pred
   # RF prediction
   RF_prediction = predict(object = object$RF_model,

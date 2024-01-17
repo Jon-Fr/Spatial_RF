@@ -29,10 +29,10 @@ mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 0
+buffer = 400
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+tolerance = 100
 
 # Set number of permutations 
 n_perm = 10
@@ -372,13 +372,6 @@ vmf_fun = function(formula, data){
                                         model = c("Mat", "Exp"),
                                         kappa = c(0.1, 0.2),
                                         fix.values = c(0, NA, NA))
-  # GLS residual variogram model fitting
-  #resid_vmf_gls = automap::autofitVariogram(formula = formula,
-  #                                          input_data = sp_df, 
-  #                                          model = c("Mat", "Exp"),
-  #                                          kappa = c(0.1, 0.2),
-  #                                          fix.values = c(0, NA, NA),
-  #                                          GLS.model = resid_vmf["var_model"]$var_model)
   # Return variogram model and training data
   return_list = list(model = resid_vmf["var_model"]$var_model, 
                      train_data = sp_df)

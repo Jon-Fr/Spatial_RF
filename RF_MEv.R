@@ -9,17 +9,14 @@ p_load("spmoran")
 
 # Additional functions that are not included in packages
 source("auxiliary_functions.R", encoding = "UTF-8")
-
-# Fewer decimal places, apply penalty on exponential notation 
-options("scipen"= 999, "digits"=4)
-
-# Load data
-data_set = "NuM_L"
-load("Data/NuM_L.rda")
-d = NuM_L
+# Load data and formula
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-pd_df = info_d_NuM_L$predDist_df
+pd_df = info_d_WuS_SuB$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
@@ -27,32 +24,13 @@ med_pd = median(pd_df$lyr.1)
 buffer = 0
 
 # Set tolerance (all = partition_loo with buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
 n_perm = 10
 
-# Set formula D1, D2, D3 are dummy variables
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                       nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                       agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
-                       lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                       lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
-                       tc45 + tc315 + D1 + D2 + D3 +
-                       aea20_2 + aea20_8 + aea20_12)
-
-# Since the eigenvectors are calculated in the model function or in the 
-# prediction function (for newdata), but the permutation of the values for 
-# calculating the VI takes place outside of these functions, dummy 
-# variables are required to estimate the VI for the eigenvectors.
-d$D1 = 1:nrow(d)
-d$D2 = 1:nrow(d)
-d$D3 = 1:nrow(d)
-
-d$checkD = 1:nrow(d)
-
 # Calculate importance for these variables
-imp_vars_RF_MEv = all.vars(fo)[-1]
+imp_vars_RF = all.vars(fo_RF)[-1]
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -62,14 +40,6 @@ if (tolerance == "all"){
   partition_fun = partition_tt_dist
   smp_args = list(buffer = buffer, tolerance = tolerance)
 }
-
-# Set first part of the model formula 
-fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                  agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
-                  tc45 +  tc315 + aea20_2 + aea20_8 + aea20_12 +"
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -93,7 +63,7 @@ fo_firstPart = "bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 ## 
 
 # Create model function 
-RF_MEv_fun = function(formula, data, fo_fp){
+RF_MEv_fun = function(formula, data){
   # Create matrix of spatial point coordinates 
   coord_m = cbind(data$X, data$Y)
   # Calculate Moran eigenvectors and eigenvalues (MEvEv)
@@ -101,9 +71,14 @@ RF_MEv_fun = function(formula, data, fo_fp){
   # Store eigenvectors in a df and combine it with the data df
   Evec_df = as.data.frame(MEvEv$sf)
   c_data = cbind(data, Evec_df)
+  # Get first part of the formula 
+  voi = all.vars(fo_RF)[1]
+  covair = all.vars(fo_RF)[-1]
+  covair_part = paste(covair, collapse = "+")
+  fo_fp = paste(voi, covair_part, sep = "~")
   # Create second part of the model formula and complete the formula
   fo_sp = paste(colnames(Evec_df), collapse="+")
-  fo_c = as.formula(paste(fo_fp, fo_sp))
+  fo_c = as.formula(paste(fo_fp, fo_sp, sep="+"))
   # Create RF model
   RF_model = ranger::ranger(formula = fo_c, 
                             data = c_data,
@@ -111,8 +86,8 @@ RF_MEv_fun = function(formula, data, fo_fp){
                             seed = 7)
   # Return the model, the MEvEv and the eigenvector df. 
   # The MEvEv are required to estimates the Moran eigenvectors at unobserved 
-  # sites. The eigenvector df is required for the PVI assessment. 
-  r_l = list("model" = RF_model, "MEvEv" = MEvEv, "Evec_df" = Evec_df)
+  # sites.  
+  r_l = list("model" = RF_model, "MEvEv" = MEvEv)
   return(r_l)
 }
 
@@ -125,18 +100,6 @@ RF_MEv_pred_fun = function(object, newdata){
   # Store eigenvectors in a df and combine it with the newdata df
   Evec_ndf = as.data.frame(MEvEv_n$sf)
   c_newdata = cbind(newdata, Evec_ndf)
-  # Check if one of the dummy variables was permuted if it was permute the value
-  # of the corresponding eigenvector
-  return(sample(object$Evec_df$V1, 1))
-  if (!identical(newdata$checkD, newdata$D1)){
-    c_newdata$V1 = sample(object$Evec_df$V1, 1)
-  }
-  if (!identical(newdata$checkD, newdata$D2)){
-    c_newdata$V2 = sample(object$Evec_df$V2, 1)
-  }
-  if (!identical(newdata$checkD, newdata$D3)){
-    c_newdata$V3 = sample(object$Evec_df$V3, 1)
-  }
   # RF prediction
   RF_prediction = predict(object = object$model,
                           data = c_newdata)
@@ -148,15 +111,14 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo, data = d, 
+sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo_RF, data = d, 
                                       coords = c("X","Y"), 
                                       model_fun = RF_MEv_fun,
-                                      model_args = list(fo_fp = fo_firstPart),
                                       pred_fun = RF_MEv_pred_fun,
                                       smp_fun = partition_fun, 
                                       smp_args = smp_args,
                                       imp_permutations = n_perm,
-                                      imp_variables = imp_vars_RF_MEv,
+                                      imp_variables = imp_vars_RF,
                                       imp_sample_from = "all",
                                       distance = TRUE)
 

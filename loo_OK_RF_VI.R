@@ -21,21 +21,21 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_RF = fo_RF_NuM_L
 
 # Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
+pd_df = info_d_NuM_L$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 0
+buffer = 16900
 
-# Set tolerance (all = partition_loo with buffer)
-tolerance = 50
+# Set tolerance (all = partition_loo without buffer)
+tolerance = 100
 
 # Set number of permutations 
 n_perm = 10
@@ -52,14 +52,14 @@ if (tolerance == "all"){
 ####
 ## Model argument preparation
 ##
-# RF formula
+# Adjusted RF formula
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
                   tc45 + tc315 + ok_inter_pred + ok_inter_var + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
+                  aea20_2 + aea20_8 + aea20_12)
 
 # OK formula
 ok_fo = as.formula(bcNitrate ~ 1)
@@ -78,21 +78,21 @@ imp_vars_RF = all.vars(fo_RF)[-1]
 
 ################################################################################
 ## Random Forest with explanatory variables from leave one out Ordinary Kriging  
-## (RF-llo-OK) prediction 
+## (RF-loo-OK) prediction 
 ################################################################################
 ################################################################################
-## End (RF-llo-OK prediction) 
+## End (RF-loo-OK prediction) 
 ################################################################################
 
 
 ################################################################################
-## RF-llo-OK spatial leave one out cross validation 
+## RF-loo-OK spatial leave one out cross validation 
 ################################################################################
 
 ####
-## llo-OK multicore function
+## loo-OK multicore function
 ##
-llo_OK_fun = function(data, buffer_dist, ok_fo, nno){
+loo_OK_fun = function(data, buffer_dist, ok_fo, nno){
   # Leave one out resampling
   resamp = sperrorest::partition_loo(data = data, ndisc = nrow(data), 
                                      replace = FALSE, coords = c("X","Y"), 
@@ -130,8 +130,8 @@ llo_OK_fun = function(data, buffer_dist, ok_fo, nno){
 }
 
 # Start time measurement
-start_time_llo_OK = Sys.time()
-print(start_time_llo_OK )
+start_time_loo_OK = Sys.time()
+print(start_time_loo_OK )
 
 # Setup backend to use many processors
 totalCores = parallel::detectCores()
@@ -142,8 +142,8 @@ sc = 1
 cluster = parallel::makeCluster(sc) 
 doParallel::registerDoParallel(cluster)
 
-# Execute llo-OK function
-llo_ok_res = llo_OK_fun(data = d, 
+# Execute loo-OK function
+loo_ok_res = loo_OK_fun(data = d, 
                         buffer_dist = buffer, 
                         ok_fo = ok_fo,
                         nno = 200) 
@@ -152,18 +152,18 @@ llo_ok_res = llo_OK_fun(data = d,
 stopCluster(cluster)
 
 # Add the results to the df 
-llo_ok_res_vec = unlist(llo_ok_res)
-ok_inter_pred = llo_ok_res_vec[seq(1, length(llo_ok_res_vec), 2)]
-ok_inter_var = llo_ok_res_vec[seq(2, length(llo_ok_res_vec), 2)]
+loo_ok_res_vec = unlist(loo_ok_res)
+ok_inter_pred = loo_ok_res_vec[seq(1, length(loo_ok_res_vec), 2)]
+ok_inter_var = loo_ok_res_vec[seq(2, length(loo_ok_res_vec), 2)]
 d$ok_inter_pred = ok_inter_pred
 d$ok_inter_var = ok_inter_var
 
 # End time measurement
-end_time_llo_OK = Sys.time()
-bygone_time_llo_OK  = end_time_llo_OK - start_time_llo_OK
-print(bygone_time_llo_OK)
+end_time_loo_OK = Sys.time()
+bygone_time_loo_OK  = end_time_loo_OK - start_time_loo_OK
+print(bygone_time_loo_OK)
 ##
-## End (llo-OK multicore function)
+## End (loo-OK multicore function)
 ####
 
 
@@ -171,11 +171,11 @@ print(bygone_time_llo_OK)
 ## Cross validation
 ## 
 
-## For the variable importance assessment it is necessary to perform the llo-OK
+## For the variable importance assessment it is necessary to perform the loo-OK
 ## for the newdata location in the prediction function.
 
 # Create model function 
-RF_lloOK_fun = function(formula, data, ok_fo){
+RF_looOK_fun = function(formula, data, ok_fo){
   ## RF model
   RF_model = ranger::ranger(formula = formula, 
                             data = data,
@@ -197,8 +197,8 @@ RF_lloOK_fun = function(formula, data, ok_fo){
 }
 
 # Create prediction function
-RF_lloOK_pred_fun = function(object, newdata, ok_fo, nno){
-  ## llo-OK
+RF_looOK_pred_fun = function(object, newdata, ok_fo, nno){
+  ## loo-OK
   # Newdata spatial points dataframe 
   new_sp_df = sp::SpatialPointsDataFrame(coords = newdata[,c("X","Y")], 
                                          data = newdata)
@@ -223,11 +223,11 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-sp_cv_llo_OK_RF = sperrorest::sperrorest(formula = fo, data = d, 
+sp_cv_loo_OK_RF = sperrorest::sperrorest(formula = fo, data = d, 
                                          coords = c("X","Y"), 
-                                         model_fun = RF_lloOK_fun,
+                                         model_fun = RF_looOK_fun,
                                          model_args = list(ok_fo = ok_fo),
-                                         pred_fun = RF_lloOK_pred_fun,
+                                         pred_fun = RF_looOK_pred_fun,
                                          pred_args = list(ok_fo = ok_fo, nno = 200),
                                          smp_fun = partition_fun, 
                                          smp_args = smp_args,
@@ -237,7 +237,7 @@ sp_cv_llo_OK_RF = sperrorest::sperrorest(formula = fo, data = d,
                                          distance = TRUE)
 
 # Get test RMSE
-test_RMSE = sp_cv_llo_OK_RF$error_rep$test_rmse
+test_RMSE = sp_cv_loo_OK_RF$error_rep$test_rmse
 test_RMSE
 
 # End time measurement
@@ -246,15 +246,15 @@ bygone_time = end_time - start_time
 print(bygone_time)  
 
 # Set file name 
-file_name = paste("Results/",data_set,"_sp_cv_llo_OK_RF_",as.character(round(buffer)),
+file_name = paste("Results/",data_set,"_sp_cv_loo_OK_RF_",as.character(round(buffer)),
                   "_+", as.character(tolerance), "_", as.character(n_perm),
                   ".rda", sep = "")
 
 # Save result 
-save(sp_cv_llo_OK_RF, bygone_time, bygone_time_llo_OK, file = file_name)
+save(sp_cv_loo_OK_RF, bygone_time, bygone_time_loo_OK, file = file_name)
 ##
 ## End (cross validation)
 #### 
 ################################################################################
-## End (RF-llo-OK spatial leave one out cross validation) 
+## End (RF-loo-OK spatial leave one out cross validation) 
 ################################################################################

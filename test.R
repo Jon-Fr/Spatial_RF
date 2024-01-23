@@ -37,10 +37,14 @@ mean(nn_distances)
 
 
 # Load result
-file_name = "WuS_SuB_sp_cv_UK_0_+50_10.rda"
-load(paste("Results/",file_name, sep = ""))
+file_name = "WuS_SuB_sp_cv_RFSI_0_+all_10.rda"
+load(paste("Results/WuS_SuB/",file_name, sep = ""))
 
-test_RMSE = sp_cv_UK$error_rep$test_rmse
+RMSE = sp_cv_RFSI$error_rep$test_rmse
+
+RMSE
+bygone_time
+
 imp <- summary(sp_cv_UK$importance)
 
 # Create a barplot - looks better with greater importance at the top:
@@ -49,8 +53,6 @@ par(mar = c(5,7,1,1)) # bottom, left, top, right margins
 barplot(imp$mean.rmse, names.arg = rownames(imp), horiz = TRUE, las = 1, 
         xlab = "Mean ... in RMSE")
 
-RMSE_sp_cv_UK = test_RMSE
-bygone_time
 
 
 ################################################################################

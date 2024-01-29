@@ -17,22 +17,22 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_lm = fo_lm_WuS_SuB
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_lm = fo_lm_NuM_L
 
 # Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
+pd_df = info_d_NuM_L$predDist_df
 max_pd = max(pd_df$lyr.1)
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 400
+buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = 100
+tolerance = "all"
 
 # Set number of permutations 
 n_perm = 10

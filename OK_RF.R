@@ -18,21 +18,21 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "NuM_L"
-load("Data/NuM_L.rda")
-d = NuM_L
-fo_RF = fo_RF_NuM_L
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-pd_df = info_d_NuM_L$predDist_df
+pd_df = info_d_WuS_SuB$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 16900
+buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = 100
+tolerance = "all"
 
 # Set number of permutations 
 n_perm = 10
@@ -53,6 +53,11 @@ if (tolerance == "all"){
 ## Model argument preparation
 ##
 
+# Weighting distance (based on the investigation of the spatial autocorrelation)
+wd = 13504 # WuS_SuB
+#wd =  # NuM_L
+
+# OK formula
 ok_fo = as.formula(bcNitrate ~ 1)
 ##
 ## End Model argument preparation)
@@ -102,14 +107,14 @@ RF_vm_fun = function(formula, data, ok_fo){
 }
 
 # Create prediction function
-OK_RF_pred_fun = function(object, newdata, ok_fo){
+OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
   # Get training data
   train_data = object$train_data
   # Create spatial points dfs
   train_sp_df = sp::SpatialPointsDataFrame(train_data[,c("X","Y")], train_data)
   newdata_sp_df = sp::SpatialPointsDataFrame(newdata[,c("X","Y")], newdata)
-  # Get the range of the variogram model
-  range = object$v_model[2,"range"]
+  # Get the range of the variogram model (could also be used to calculate the weights)
+  #range = object$v_model[2,"range"]
   # Kriging interpolation/prediction
   ok_pred = krige(formula = ok_fo, train_sp_df, 
                   model = object$v_model, newdata = newdata_sp_df,
@@ -127,10 +132,9 @@ OK_RF_pred_fun = function(object, newdata, ok_fo){
                        + (train_data[, "Y"] - newdata[i, "Y"])^2))
   }
   # Compute weights
-  weights = dist/range
+  weights = dist/wd
   # Weight predictions
-  final_prediction = (1-weights) * ok_inter + weights * 
-    RF_prediction_values
+  final_prediction = (1-weights) * ok_inter + weights * RF_prediction_values
   return(final_prediction)
 }
 
@@ -143,7 +147,7 @@ sp_cv_OK_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                      coords = c("X","Y"), 
                                      model_fun = RF_vm_fun,
                                      model_args = list(ok_fo = ok_fo),
-                                     pred_args = list(ok_fo = ok_fo),
+                                     pred_args = list(ok_fo = ok_fo, wd = wd),
                                      pred_fun = OK_RF_pred_fun,
                                      smp_fun = partition_fun, 
                                      smp_args = smp_args,

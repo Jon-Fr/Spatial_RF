@@ -37,15 +37,15 @@ mean(nn_distances)
 
 
 # Load result
-file_name = "WuS_SuB_sp_cv_RFSI_0_+all_10.rda"
-load(paste("Results/WuS_SuB/",file_name, sep = ""))
+file_name = "WuS_SuB_sp_cv_OK_RF_0_+50_10.rda"
+load(paste("Results/",file_name, sep = ""))
 
-RMSE = sp_cv_RFSI$error_rep$test_rmse
+RMSE = sp_cv_OK_RF$error_rep$test_rmse
 
 RMSE
 bygone_time
 
-imp <- summary(sp_cv_UK$importance)
+imp <- summary(sp_cv_OK_RF$importance)
 
 # Create a barplot - looks better with greater importance at the top:
 imp <- imp[order(imp$mean.rmse, decreasing = TRUE),]
@@ -100,9 +100,3 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"
 ################################################################################
 # End (test importance)
 ################################################################################
-
-e = as.Date("2024-05-12")
-c = as.Date("2024-01-06")
-
-d = e - c
-d

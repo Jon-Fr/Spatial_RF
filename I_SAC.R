@@ -16,12 +16,12 @@ load("Data/WuS_SuB.rda")
 d = WuS_SuB
 fo_lm = fo_lm_WuS_SuB
 
-#load("Data/NuM_L.rda")
-#d = NuM_L
-#fo_lm = fo_lm_NuM_L
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_lm = fo_lm_NuM_L
 
 # Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
+pd_df = info_d_NuM_L$predDist_df
 hist(pd_df$lyr.1)
 third_quartile = quantile(x = pd_df$lyr.1, probs = c(0.75))
 tq_pd = third_quartile

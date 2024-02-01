@@ -18,27 +18,28 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "NuM_L"
-load("Data/NuM_L.rda")
-d = NuM_L
-fo_RF = fo_RF_NuM_L
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-pd_df = info_d_NuM_L$predDist_df
+pd_df = info_d_WuS_SuB$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
 # Set buffer 
-buffer = 25600
+buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = 100
+tolerance = "all"
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){

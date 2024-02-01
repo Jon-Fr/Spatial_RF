@@ -64,13 +64,38 @@ if (tolerance == "all"){
 ################################################################################
 
 ####
-## Standard deviation of the variable of interest
+## Standard deviation of the variable of interest, intercept RMSE
 ##
 s_dev = sd(d$bcNitrate)
 s_dev
+
+# Formula
+fo_ic = bcNitrate ~ 1
+
+# Model and prediction function 
+ic_fun = function(formula, data){
+  lm_m = lm(formula, data)
+  return(lm_m)
+}
+ic_pred_fun = function(object, newdata){
+  predi = predict(object = object, newdata = newdata)
+  return(predi)
+}
+
+# Spatial cross validation
+sp_cv_ic = sperrorest::sperrorest(formula = fo_ic, data = d, coords = c("X","Y"), 
+                                   model_fun = ic_fun, 
+                                   pred_fun = ic_pred_fun,
+                                   smp_fun = partition_fun, 
+                                   smp_args = smp_args,
+                                   distance = TRUE)
+
+# Get test RMSE
+test_RMSE = sp_cv_ic$error_rep$test_rmse
+test_RMSE
 ##
 ## 
-#### End (standard deviation of the variable of interest)
+#### End (standard deviation of the variable of interest, intercept RMSE)
 
 
 ####

@@ -21,13 +21,13 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "NuM_L"
-load("Data/NuM_L.rda")
-d = NuM_L
-fo_RF = fo_RF_NuM_L
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB
 
 # Get information about the prediction distance 
-pd_df = info_d_NuM_L$predDist_df
+pd_df = info_d_WuS_SuB$predDist_df
 mean_pd = mean(pd_df$lyr.1)
 med_pd = median(pd_df$lyr.1)
 
@@ -38,7 +38,7 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -59,7 +59,7 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
                   tc45 + tc315 + ok_inter_pred + ok_inter_var + 
-                  aea20_2 + aea20_8 + aea20_12)
+                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
 
 # OK formula
 ok_fo = as.formula(bcNitrate ~ 1)
@@ -71,6 +71,7 @@ ok_fo = as.formula(bcNitrate ~ 1)
 # adjusted formula is used because the importance of the OK variables is  
 # evaluated together with the X and Y coordinate 
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 ################################################################################
 ## End (preparation)
 ################################################################################

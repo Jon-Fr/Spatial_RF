@@ -39,6 +39,7 @@ n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -55,7 +56,7 @@ if (tolerance == "all"){
 
 # Weighting distance (based on the investigation of the spatial autocorrelation)
 wd = 13504 # WuS_SuB
-#wd =  # NuM_L
+#wd = 8841 # NuM_L
 
 # OK formula
 ok_fo = as.formula(bcNitrate ~ 1)
@@ -124,7 +125,7 @@ OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
   # RF prediction
   RF_prediction = predict(object = object$RF_model,
                           data = newdata)
-  RF_prediction_values = RF_prediction$predictions
+  RF_prediction_value = RF_prediction$predictions
   # Compute distance between newdata and the nearest training data point 
   dist = rep(NA, nrow(newdata))
   for (i in 1:nrow(newdata)){
@@ -134,7 +135,11 @@ OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
   # Compute weights
   weights = dist/wd
   # Weight predictions
-  final_prediction = (1-weights) * ok_inter + weights * RF_prediction_values
+  if (weights < 1){
+    final_prediction = (1-weights) * ok_inter + weights * RF_prediction_value
+  } else{
+    final_prediction = RF_prediction_value
+  }
   return(final_prediction)
 }
 

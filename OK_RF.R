@@ -58,7 +58,7 @@ wd = 13504 # WuS_SuB
 #wd = 8841 # NuM_L
 
 # OK formula
-ok_fo = as.formula(bcNitrate ~ 1)
+OK_fo = as.formula(bcNitrate ~ 1)
 ##
 ## End Model argument preparation)
 ####
@@ -85,7 +85,7 @@ ok_fo = as.formula(bcNitrate ~ 1)
 ## 
 
 # Create model function 
-RF_vm_fun = function(formula, data, ok_fo){
+RF_vm_fun = function(formula, data, OK_fo){
   # Create RF model
   RF_model = ranger::ranger(formula = formula, 
                             data = data,
@@ -94,7 +94,7 @@ RF_vm_fun = function(formula, data, ok_fo){
   # Create a spatial points df 
   sp_df = sp::SpatialPointsDataFrame(coords = data[,c("X","Y")], data = data)
   # variogram model fitting
-  vmf = automap::autofitVariogram(formula = ok_fo, input_data = sp_df,
+  vmf = automap::autofitVariogram(formula = OK_fo, input_data = sp_df,
                                   model = c("Mat", "Exp"),
                                   kappa = c(0.1,0.2),
                                   fix.values = c(0, NA, NA))
@@ -107,7 +107,7 @@ RF_vm_fun = function(formula, data, ok_fo){
 }
 
 # Create prediction function
-OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
+OK_RF_pred_fun = function(object, newdata, OK_fo, wd){
   # Get training data
   train_data = object$train_data
   # Create spatial points dfs
@@ -116,7 +116,7 @@ OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
   # Get the range of the variogram model (could also be used to calculate the weights)
   #range = object$v_model[2,"range"]
   # Kriging interpolation/prediction
-  ok_pred = krige(formula = ok_fo, train_sp_df, 
+  ok_pred = krige(formula = OK_fo, train_sp_df, 
                   model = object$v_model, newdata = newdata_sp_df,
                   debug.level = 0,
                   nmax = 200)
@@ -131,9 +131,9 @@ OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
     dist[i] = min(sqrt((train_data[, "X"] - newdata[i, "X"])^2 
                        + (train_data[, "Y"] - newdata[i, "Y"])^2))
   }
-  if (dist < wd){
-     # Compute weights
-    weights = dist/wd
+  if (dist[1] < wd){
+    # Compute weights
+    weights = dist[1]/wd
     # Weight predictions
     final_prediction = (1-weights) * ok_inter + weights * RF_prediction_value
   } else{
@@ -150,8 +150,8 @@ print(start_time)
 sp_cv_OK_RF = sperrorest::sperrorest(formula = fo_RF, data = d, 
                                      coords = c("X","Y"), 
                                      model_fun = RF_vm_fun,
-                                     model_args = list(ok_fo = ok_fo),
-                                     pred_args = list(ok_fo = ok_fo, wd = wd),
+                                     model_args = list(OK_fo = OK_fo),
+                                     pred_args = list(OK_fo = OK_fo, wd = wd),
                                      pred_fun = OK_RF_pred_fun,
                                      smp_fun = partition_fun, 
                                      smp_args = smp_args,

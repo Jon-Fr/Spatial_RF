@@ -14,7 +14,7 @@ p_load("MASS")
 source("auxiliary_functions.R", encoding = "UTF-8")
 
 # Load data
-load(".rda")
+load("Data/run_nitrate_de.rda")
 
 d = d
 

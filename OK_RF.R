@@ -32,14 +32,13 @@ med_pd = median(pd_df$lyr.1)
 buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
 n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
-imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -132,10 +131,10 @@ OK_RF_pred_fun = function(object, newdata, ok_fo, wd){
     dist[i] = min(sqrt((train_data[, "X"] - newdata[i, "X"])^2 
                        + (train_data[, "Y"] - newdata[i, "Y"])^2))
   }
-  # Compute weights
-  weights = dist/wd
-  # Weight predictions
-  if (weights < 1){
+  if (dist < wd){
+     # Compute weights
+    weights = dist/wd
+    # Weight predictions
     final_prediction = (1-weights) * ok_inter + weights * RF_prediction_value
   } else{
     final_prediction = RF_prediction_value

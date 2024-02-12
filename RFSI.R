@@ -30,11 +30,10 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
-imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -48,17 +47,6 @@ if (tolerance == "all"){
 ####
 ## Data and model argument preparation
 ##
-# Formula to character
-fo_chr = as.character(fo_RF)
-# count number of +, add 1
-count = 1
-for (i in 1:nchar(fo_chr[[3]])){
-  chr = substring(fo_chr[[3]],i,i)
-  if (chr == "+"){
-   count = count + 1 
-  }
-}
-
 # Observation column
 obs_col = "bcNitrate"
 
@@ -73,14 +61,6 @@ d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
 ####
 ################################################################################
 ## End (preparation)
-################################################################################
-
-
-################################################################################
-## Random Forest spatial interpolation (RFSI) prediction 
-################################################################################
-################################################################################
-## End (RFSI prediction) 
 ################################################################################
 
 

@@ -71,7 +71,7 @@ info_dist = function(path_predArea, dataPoints_df, c_r_s, resolution,
   return(results)
 }
 ##
-## End (Function the a prediction distance df and a point distance df)
+## End (Function to create a prediction distance df and a point distance df )
 ####
 
 ####

@@ -18,11 +18,6 @@ load("Data/WuS_SuB.rda")
 d = WuS_SuB
 fo_lm = fo_lm_WuS_SuB
 
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
-
 # Set buffer 
 buffer = 0
 
@@ -30,7 +25,7 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Formula for base RF-model
 fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
@@ -38,13 +33,11 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
+                  aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
-imp_vars_lm = NULL
 imp_vars_bRF = all.vars(fo)[-1]
-imp_vars_bRF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -118,7 +111,7 @@ start_time = Sys.time()
 print(start_time)
 
 # Perform the spatial cross-validation
-sp_cv_MLR = sperrorest::sperrorest(formula = fo_lm, data = d, coords = c("X","Y"), 
+sp_cv_MLR = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"), 
                                   model_fun = lm_fun, 
                                   pred_fun = lm_pred_fun,
                                   smp_fun = partition_fun, 

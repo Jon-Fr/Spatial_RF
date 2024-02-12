@@ -33,14 +33,14 @@ for (i in 1:length(sp_cv_MLR$error_fold[[1]])){
   nn_dist = sp_cv_MLR$error_fold[[1]][[i]]$distance
   nn_distances = append(nn_distances, nn_dist)
 }
-mean(nn_distances)
+median(nn_distances)
 
 
 # Load result
-file_name = "WuS_SuB_sp_cv_OK_RF_0_+50_10.rda"
-load(paste("Results/",file_name, sep = ""))
+file_name = "WuS_SuB_sp_cv_MLR_0_+all_10.rda"
+load(paste("Results/WuS_SuB/",file_name, sep = ""))
 
-RMSE = sp_cv_OK_RF$error_rep$test_rmse
+RMSE = sp_cv_MLR$error_rep$test_rmse
 
 RMSE
 bygone_time

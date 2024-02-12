@@ -38,7 +38,7 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -71,18 +71,8 @@ ok_fo = as.formula(bcNitrate ~ 1)
 # adjusted formula is used because the importance of the OK variables is  
 # evaluated together with the X and Y coordinate 
 imp_vars_RF = all.vars(fo_RF)[-1]
-imp_vars_RF = NULL
 ################################################################################
 ## End (preparation)
-################################################################################
-
-
-################################################################################
-## Random Forest with explanatory variables from leave one out Ordinary Kriging  
-## (RF-loo-OK) prediction 
-################################################################################
-################################################################################
-## End (RF-loo-OK prediction) 
 ################################################################################
 
 

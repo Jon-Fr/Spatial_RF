@@ -35,11 +35,10 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
-imp_vars_lm = NULL
 
 # Create a spatial points df 
 sp_df = sp::SpatialPointsDataFrame(d[,c("X","Y")], d)
@@ -54,14 +53,6 @@ if (tolerance == "all"){
 }
 ################################################################################
 ## End (preparation)
-################################################################################
-
-
-################################################################################
-## Universal Kriging (UK) prediction/interpolation 
-################################################################################
-################################################################################
-## End (UK prediction/interpolation)
 ################################################################################
 
 

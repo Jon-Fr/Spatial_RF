@@ -18,11 +18,6 @@ load("Data/WuS_SuB.rda")
 d = WuS_SuB
 fo_RF = fo_RF_WuS_SuB
 
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
-
 # Set buffer 
 buffer = 0
 
@@ -30,11 +25,10 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
-imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -46,14 +40,6 @@ if (tolerance == "all"){
 }
 ################################################################################
 ## End (preparation)
-################################################################################
-
-
-################################################################################
-## Random Forest (RF) prediction 
-################################################################################
-################################################################################
-## End (RF prediction) 
 ################################################################################
 
 

@@ -35,7 +35,7 @@ buffer = 0
 tolerance = "all"
 
 # Set number of permutations 
-n_perm = 0
+n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
@@ -61,15 +61,6 @@ obs_col = "bcNitrate"
 ####
 ################################################################################
 ## End (preparation)
-################################################################################
-
-
-################################################################################
-## Random Forest with Ordinary Kriging of the out of bag residuals (RF-oob-OK) 
-## prediction 
-################################################################################
-################################################################################
-## End (RF-oob-OK prediction) 
 ################################################################################
 
 
@@ -122,9 +113,9 @@ RF_oob_OK_pred_fun = function(object, newdata){
                          debug.level = 0,
                          nmax = 200)
   # Sum up the residual interpolation and the RF prediction
-  newdata_sp_df$final_predcition = newdata_sp_df$RF_predictions + 
+  newdata_sp_df$final_prediction = newdata_sp_df$RF_predictions + 
     ok_pred$var1.pred  
-  return(newdata_sp_df$final_predcition)
+  return(newdata_sp_df$final_prediction)
 }
 
 # Start time measurement

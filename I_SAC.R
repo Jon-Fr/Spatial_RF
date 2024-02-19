@@ -11,9 +11,19 @@ p_load("automap")
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data and formula 
+# Load data set formulas 
 load("Data/WuS_SuB.rda")
 load("Data/NuM_L.rda")
+fo_lm_NuM_L = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                           nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                           agrum_log10_gwn + agrum_log10_geschw + Ackerland + lbm_class_Gruenland + 
+                           lbm_class_Unbewachsen + lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                           aea20_2 + aea20_8 + aea20_12 + X + Y)
+fo_lm_WuS_SuB = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                             nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                             agrum_log10_gwn + agrum_log10_geschw + Ackerland + lbm_class_Gruenland + 
+                             lbm_class_Unbewachsen + lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                             aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
 #N = NuM_L
 #W = WuS_SuB
 
@@ -64,27 +74,27 @@ sp_df_N = sp::SpatialPointsDataFrame(NuM_L[,c("X","Y")], NuM_L)
 ####
 ## Empirical semivariogram (EmSv) of the variable of interest
 ##
-emp_svario_N = gstat::variogram(bcNitrate~1, data=sp_df_N, cutoff = 150000, 
+emp_svario_N = gstat::variogram(subMittelwert ~1, data=sp_df_N, cutoff = 150000, 
                               width = 100) 
 plot(emp_svario_N$dist, emp_svario_N$gamma)
 
-emp_svario_W = gstat::variogram(bcNitrate~1, data=sp_df_W, cutoff = 175000, 
+emp_svario_W = gstat::variogram(subMittelwert ~1, data=sp_df_W, cutoff = 175000, 
                                 width = 100) 
 plot(emp_svario_W$dist, emp_svario_W$gamma)
 
 # Fit variogram model
-vmf_N = automap::autofitVariogram(formula = bcNitrate ~ 1, 
+vmf_N = automap::autofitVariogram(formula = subMittelwert ~ 1, 
                                          input_data = sp_df_N, 
-                                         model = c("Mat", "Exp"),
-                                         kappa = c(0.1,0.2,0.3),
+                                          model = c("Mat", "Exp"),
+                                         kappa = c(seq(0.1, 0.4, 0.1)),
                                          fix.values = c(0, NA, NA),
                                          verbose = TRUE)
 
 
-vmf_W = automap::autofitVariogram(formula = bcNitrate ~ 1, 
+vmf_W = automap::autofitVariogram(formula = subMittelwert ~ 1, 
                                         input_data = sp_df_W, 
                                         model = c("Mat", "Exp"),
-                                        kappa = c(0.1,0.2,0.3),
+                                        kappa = c(seq(0.1, 0.4, 0.1)),
                                         fix.values = c(0, NA, NA),
                                         verbose = TRUE)
 
@@ -97,7 +107,7 @@ vm_points_W = gstat::variogramLine(vmf_W["var_model"]$var_model, maxdist = 50000
 par(mar = c(4.1,4,0.1,0.5)) # bottom, left, top, right margins
 
 plot(emp_svario_N$dist, emp_svario_N$gamma, xlab = "", 
-     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(1.1, 10))
+     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0, 3500))
 lines(x = vm_points_N$dist,
       y = vm_points_N$gamma,
       col = ("#0000FF"),
@@ -105,7 +115,7 @@ lines(x = vm_points_N$dist,
 legend(x = "bottomright" , legend = c("a)"), bty = "n")
 
 plot(emp_svario_W$dist, emp_svario_W$gamma, xlab = "Entfernung [m]", 
-     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(1, 10))
+     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0, 400))
 lines(x = vm_points_W$dist,
       y = vm_points_W$gamma,
       col = ("#0000FF"),
@@ -136,14 +146,14 @@ emp_svario_resi_W = gstat::variogram(mlr_resi~1, data=sp_df_W, cutoff = 50000,
 resid_vmf_N = automap::autofitVariogram(formula = mlr_resi~1, 
                                          input_data = sp_df_N, 
                                          model = c("Mat", "Exp"),
-                                         kappa = c(0.1,0.2,0.3),
+                                         kappa = c(seq(0.1, 0.4, 0.1)),
                                          fix.values = c(0, NA, NA),
                                          verbose = TRUE)
 
 resid_vmf_W = automap::autofitVariogram(formula = mlr_resi~1, 
                                         input_data = sp_df_W, 
                                         model = c("Mat", "Exp"),
-                                        kappa = c(0.1,0.2,0.3),
+                                        kappa = c(seq(0.1, 0.4, 0.1)),
                                         fix.values = c(0, NA, NA),
                                         verbose = TRUE)
 
@@ -152,10 +162,10 @@ vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist =
 vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 50000)
 
 # Plots
-par(mar = c(4.1,4,0.1,0.5)) # bottom, left, top, right margins
+par(mar = c(4.0,4,0.5,0.5)) # bottom, left, top, right margins
 
 plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma, xlab = "", 
-     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(1.1, 10))
+     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0, 3500))
 lines(x = vm_points_N$dist,
       y = vm_points_N$gamma,
       col = ("#0000FF"),
@@ -163,7 +173,7 @@ lines(x = vm_points_N$dist,
 legend(x = "bottomright" , legend = c("a)"), bty = "n")
 
 plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, xlab = "Entfernung [m]", 
-     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0.75, 7))
+     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0, 300))
 lines(x = vm_points_W$dist,
       y = vm_points_W$gamma,
       col = ("#0000FF"),

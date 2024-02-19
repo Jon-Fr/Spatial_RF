@@ -15,6 +15,7 @@ p_load("parallel")
 p_load("doParallel")
 p_load("foreach")
 p_load("spmoran")
+p_load("RandomForestsGLS")
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
@@ -27,7 +28,7 @@ fo_lm = fo_lm_WuS_SuB
 fo_RF = fo_RF_WuS_SuB
 
 # Formula for base RF-model
-bRF_fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+bRF_fo = as.formula(subMittelwert  ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
@@ -35,7 +36,7 @@ bRF_fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevati
                   aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
 
 # Formula for loo-OK-RF
-loo_OK_RF_fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+loo_OK_RF_fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
@@ -44,13 +45,30 @@ loo_OK_RF_fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + e
                   aea20_1 + aea20_2 + aea20_12 + aea20_13)
 
 # OK formula
-ok_fo = as.formula(bcNitrate ~ 1)
+ok_fo = as.formula(subMittelwert  ~ 1)
 
-# Observation column for RFSI and RF-oob-OK
-obs_col = "bcNitrate"
+# Explanatory variables and number of explanatory variables for RF-GLS
+ex_v_columns = c("crestime", "cgwn", "cgeschw", "log10carea", "elevation",
+                   "nfk", "humus", "cAckerland", "log10_gwn", 
+                   "agrum_log10_restime", "agrum_log10_gwn", "agrum_log10_geschw",
+                   "Ackerland", "lbm_class_Gruenland", "lbm_class_Unbewachsen", 
+                   "lbm_class_FeuchtgebieteWasser", "lbm_class_Siedlung", "X", 
+                   "Y", "tc45", "tc315", "aea20_1", "aea20_2", "aea20_12", 
+                   "aea20_13")
+num_of_ex_v = length(ex_v_columns )
+
+# Observation column for RFSI, RF-oob-OK and RF-GLS
+obs_col = "subMittelwert "
+
+# CRS for RFSI
+c_r_s = "EPSG:25832"
+
+# Names of the station ID (staid), longitude (X), latitude (Y)
+# and time columns in data for RFSI
+d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
 
 # Weighting distance for OK-RF (based on the investigation of the spatial autocorrelation)
-wd = 13504 # WuS_SuB
+wd =  # WuS_SuB
 
 ####
 ## Sample a training and test/prediction subset 
@@ -79,32 +97,81 @@ d_pred = d_sample[tt_ids[[1]][[1]]$test, ]
 ## End (sample a training and test/prediction subset)
 ####
 
-####
-## Data and model argument preparation RFSI
-##
-# CRS
-c_r_s = "EPSG:25832"
+# Create spatial points dfs for UK and OK-RF
+sp_df_train = sp::SpatialPointsDataFrame(d_train[,c("X","Y")], d_train)
+sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
 
-# Names of the station ID (staid), longitude (X), latitude (Y) 
-# and time columns in data
-d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
-##
-## End (data and model argument preparation RFSI)
-####
+# Coordinates and explanatory variable matrices as well as observation values for RF-GLS
+c_matrix_train = as.matrix(d_train[, c("X", "Y")])
+c_matrix_pred = as.matrix(d_pred[, c("X", "Y")])
+ex_v_matrix_train = data.matrix(d_train[, ex_v_columns])
+ex_v_matrix_pred = data.matrix(d_pred[, ex_v_columns])
+observations = d_train[, obs_col]
 
 # Decide which models to run
 MLR = TRUE
 bRF = TRUE
-RF = TRUE
+RF_K = TRUE
 RFSI = TRUE
 RF_MEv = TRUE
 loo_OK_RF = TRUE
 RF_oob_OK = TRUE
 OK_RF = TRUE
 UK = TRUE
+RF_GLS  = FALSE
 ################################################################################
 ## End (preparation)
 ################################################################################
+
+
+################################################################################
+## RF-GLS
+################################################################################
+if (RF_GLS){
+  # Set seed
+  set.seed(7)
+  # Start time measurement (train)
+  start_time_train = Sys.time()
+  
+  # Train model
+  RF_GLS_M = RandomForestsGLS::RFGLS_estimate_spatial(
+    coords = c_matrix_train,
+    X = ex_v_matrix_train,
+    y = observations,
+    param_estimate = TRUE,
+    cov.model = "exponential",
+    mtry = floor(sqrt(num_of_ex_v)),
+    h = 10)
+  
+  # End time measurement (train)
+  end_time_train = Sys.time()
+  bygone_time_train = end_time_train - start_time_train
+  
+  # Start time measurement (predict)
+  start_time_predict = Sys.time()
+  
+  for (i in 1:1000){
+    # Prediction
+    RF_GLS_prediction = RandomForestsGLS::RFGLS_predict_spatial(
+      RFGLS_out = RF_GLS_M,
+      Xtest = ex_v_matrix_pred,
+      coords.0 = c_matrix_pred)
+  }
+  
+  # End time measurement (predict)
+  end_time_predict = Sys.time()
+  bygone_time_predict = end_time_predict - start_time_predict
+  
+  # Set file name 
+  file_name = paste("Results/", data_set, "_CT_RF_GLS_", as.character(n_total),
+                    ".rda", sep = "")
+  # Save result 
+  save(bygone_time_train, bygone_time_predict, file = file_name)
+}
+################################################################################
+## End (RF-GLS)
+################################################################################
+
 
 
 ################################################################################
@@ -114,8 +181,10 @@ if (MLR){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Create model
   lm_m = lm(fo_lm, d_train)
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -124,8 +193,10 @@ if (MLR){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Prediction
   MLR_predi = predict(object = lm_m, newdata = d_pred)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -149,11 +220,13 @@ if (bRF){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Train model
   bRF_model = ranger::ranger(formula = bRF_fo, 
                              data = d_train,
                              oob.error = FALSE,
                              seed = 7)
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -162,8 +235,10 @@ if (bRF){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Prediction
   bRF_predi = predict(object = bRF_model, data = d_pred)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -182,17 +257,19 @@ if (bRF){
 
 
 ################################################################################
-## RF
+## RF-K
 ################################################################################
-if (RF){
+if (RF_K){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Train model
   RF_model = ranger::ranger(formula = fo_RF, 
                              data = d_train,
                              oob.error = FALSE,
                              seed = 7)
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -201,8 +278,10 @@ if (RF){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Prediction
   RF_predi = predict(object = RF_model, data = d_pred)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -216,7 +295,7 @@ if (RF){
   save(bygone_time_train, bygone_time_predict, file = file_name)
 }
 ################################################################################
-## End (RF)
+## End (RF-K)
 ################################################################################
 
 
@@ -227,6 +306,7 @@ if (RFSI){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Create model
   RFSI_model = meteo::rfsi(formula = fo_RF,
                            data = d_train,
@@ -243,6 +323,7 @@ if (RFSI){
                            min.bucket = 1,
                            max.depth = 0,
                            splitrule = "variance")
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -251,6 +332,7 @@ if (RFSI){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Prediction
   RFSI_prediction = meteo::pred.rfsi(model = RFSI_model,
                                      data = d_train,
@@ -262,6 +344,7 @@ if (RFSI){
                                      newdata.s.crs = c_r_s,
                                      progress = FALSE,
                                      soil3d=FALSE)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -284,6 +367,7 @@ if (RF_MEv){
   # Start time measurement (preprocessing)
   start_time_pp = Sys.time()
   
+  for (i in 1:1000){
   # Create matrix of spatial point coordinates 
   coord_m = cbind(d_sample$X, d_sample$Y)
   # Calculate Moran eigenvectors and eigenvalues (MEvEv)
@@ -304,6 +388,7 @@ if (RF_MEv){
   # Recreate the subsets, so that the subsets contain the eigenvector values 
   d_train = c_data[tt_ids[[1]][[1]]$train, ]
   d_pred = c_data[tt_ids[[1]][[1]]$test, ]
+  }
   
   # End time measurement (preprocessing)
   end_time_pp = Sys.time()
@@ -312,9 +397,11 @@ if (RF_MEv){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Train model
   RF_MEv_model = ranger::ranger(formula = fo_c, data = d_train, 
                                  oob.error = FALSE, seed = 7)
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -323,8 +410,10 @@ if (RF_MEv){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Prediction
   RF_MEv_predi = predict(object = RF_MEv_model, data = d_pred)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -370,7 +459,7 @@ loo_OK_fun = function(data, buffer_dist, ok_fo, nno){
                               resid_vm = automap::autofitVariogram(formula = ok_fo, 
                                                                    input_data = train_sp_df, 
                                                                    model = c("Mat", "Exp"),
-                                                                   kappa = c(0.1,0.2),
+                                                                   kappa = c(seq(0.1, 0.4, 0.1)),
                                                                    fix.values = c(0, NA, NA))
                               # Get the model
                               resid_vmm = resid_vm["var_model"]$var_model
@@ -392,10 +481,14 @@ loo_OK_fun = function(data, buffer_dist, ok_fo, nno){
                             }
 }
 
+# Create a copy of the train df
+d_train_loo = d_train
+
 if (loo_OK_RF){
   # Start time measurement (preprocessing)
   start_time_pp = Sys.time()
   
+  for (i in 1:100){
   # Setup backend to use many processors
   totalCores = parallel::detectCores()
   
@@ -404,7 +497,7 @@ if (loo_OK_RF){
   doParallel::registerDoParallel(cluster)
   
   # Execute loo-OK function
-  loo_ok_res = loo_OK_fun(data = d_train, 
+  loo_ok_res = loo_OK_fun(data = d_train_loo, 
                           buffer_dist = 0, 
                           ok_fo = ok_fo,
                           nno = 0)
@@ -416,32 +509,33 @@ if (loo_OK_RF){
   loo_ok_res_vec = unlist(loo_ok_res)
   ok_inter_pred = loo_ok_res_vec[seq(1, length(loo_ok_res_vec), 2)]
   ok_inter_var = loo_ok_res_vec[seq(2, length(loo_ok_res_vec), 2)]
-  d_train$ok_inter_pred = ok_inter_pred
-  d_train$ok_inter_var = ok_inter_var
+  d_train_loo$ok_inter_pred = ok_inter_pred
+  d_train_loo$ok_inter_var = ok_inter_var
   
   ## Normal OK for the prediction data
   # Create spatial points dfs
-  sp_df_train = sp::SpatialPointsDataFrame(d_train[,c("X","Y")], d_train)
-  sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
+  sp_df_train_loo = sp::SpatialPointsDataFrame(d_train_loo[,c("X","Y")], d_train_loo)
+  sp_df_pred_loo = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
   
   # Fit variogram model
   resid_vm = automap::autofitVariogram(formula = ok_fo,
-                                       input_data = sp_df_train,
+                                       input_data = sp_df_train_loo,
                                        model = c("Mat", "Exp"),
-                                       kappa = c(0.1,0.2),
+                                       kappa = c(seq(0.1, 0.4, 0.1)),
                                        fix.values = c(0, NA, NA))
   # Get the variogram model
   resid_vmm = resid_vm["var_model"]$var_model
   
   # Ordinary Kriging interpolation
-  ok_pred = gstat::krige(formula = ok_fo, sp_df_train, 
+  ok_pred = gstat::krige(formula = ok_fo, sp_df_loo, 
                          model = resid_vmm, 
-                         newdata = sp_df_pred, 
+                         newdata = sp_df_pred_temp, 
                          debug.level = 0)
   
   # Add the OK results to the predcition df 
-  d_train$ok_inter_pred = ok_pred$var1.pred 
-  d_train$ok_inter_var = ok_pred$var1.var
+  d_pred$ok_inter_pred = ok_pred$var1.pred 
+  d_pred$ok_inter_var = ok_pred$var1.var
+  }
   
   # End time measurement (preprocessing)
   end_time_pp = Sys.time()
@@ -450,9 +544,11 @@ if (loo_OK_RF){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Train model
-  loo_OK_RF_model = ranger::ranger(formula = loo_OK_RF_fo, data = d_train, 
+  loo_OK_RF_model = ranger::ranger(formula = loo_OK_RF_fo, data = d_train_loo, 
                                 oob.error = FALSE, seed = 7)
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -461,8 +557,10 @@ if (loo_OK_RF){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Prediction
   loo_OK_RF_predi = predict(object = loo_OK_RF_model, data = d_pred)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -483,14 +581,19 @@ if (loo_OK_RF){
 ## RF-oob-OK
 ################################################################################
 if (RF_oob_OK){
+  # Create a copy of the train df
+  d_train_oob = d_train
+  
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Train model
   RF_model = ranger::ranger(formula = fo_RF, 
-                             data = d_train,
+                             data = d_train_oob,
                              oob.error = TRUE,
                              seed = 7)
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -499,22 +602,23 @@ if (RF_oob_OK){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # RF Prediction
   RF_predi = predict(object = RF_model, data = d_pred)
   
   # Calculate the oob residuals and add them to the df
-  d_train$oob_resi = d_train[, obs_col] - RF_model$predictions
+  d_train_oob$oob_resi = d_train_oob[, obs_col] - RF_model$predictions
   
   ## OK oob residuals interpolation
   # Create spatial points train df
-  sp_df_train = sp::SpatialPointsDataFrame(d_train[,c("X","Y")], d_train)
+  sp_df_train = sp::SpatialPointsDataFrame(d_train_oob[,c("X","Y")], d_train_oob)
   sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
   
   # Fit variogram model
   resid_vm = automap::autofitVariogram(formula = oob_resi ~ 1,
                                        input_data = sp_df_train,
                                        model = c("Mat", "Exp"),
-                                       kappa = c(0.1,0.2),
+                                       kappa = c(seq(0.1, 0.4, 0.1)),
                                        fix.values = c(0, NA, NA))
   # Get the model
   resid_vmm = resid_vm["var_model"]$var_model
@@ -527,6 +631,7 @@ if (RF_oob_OK){
   
   # Sum up the residual interpolation and the RF prediction
   final_prediction = RF_predi$predictions + ok_pred$var1.pred  
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -550,6 +655,7 @@ if (OK_RF){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:1000){
   # Train RF model
   RF_model = ranger::ranger(formula = fo_RF, 
                             data = d_train,
@@ -563,18 +669,15 @@ if (OK_RF){
                        + (d_train[, "Y"] - d_pred[i, "Y"])^2))
   }
   
-  # Create spatial points dfs
-  sp_df_train = sp::SpatialPointsDataFrame(d_train[,c("X","Y")], d_train)
-  sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
-  
   # Fit variogram model
   resid_vm = automap::autofitVariogram(formula = ok_fo,
                                        input_data = sp_df_train,
                                        model = c("Mat", "Exp"),
-                                       kappa = c(0.1,0.2),
+                                       kappa = c(seq(0.1, 0.4, 0.1)),
                                        fix.values = c(0, NA, NA))
   # Get the variogram model
   resid_vmm = resid_vm["var_model"]$var_model
+  }
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -583,6 +686,7 @@ if (OK_RF){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
+  for (i in 1:1000){
   # Ordinary Kriging interpolation
   ok_pred = gstat::krige(formula = ok_fo, sp_df_train, 
                          model = resid_vmm, 
@@ -604,6 +708,7 @@ if (OK_RF){
   
   # Weight predictions
   final_prediction = OK_weights * ok_pred$var1.pred + weights * RF_predi$predictions
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()
@@ -628,15 +733,12 @@ if (UK){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
-  # Create spatial points dfs
-  sp_df_train = sp::SpatialPointsDataFrame(d_train[,c("X","Y")], d_train)
-  sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
-  
+  for (i in 1:1000){
   # OLS residual variogram model fitting
   resid_vmf = automap::autofitVariogram(formula = fo_lm, 
                                         input_data = sp_df_train,
                                         model = c("Mat", "Exp"),
-                                        kappa = c(0.1, 0.2),
+                                        kappa = c(seq(0.1, 0.4, 0.1)),
                                         fix.values = c(0, NA, NA))
   # Get the variogram model 
   resid_vmm = resid_vmf["var_model"]$var_model
@@ -647,6 +749,7 @@ if (UK){
                          model = resid_vmm,
                          newdata = sp_df_pred,
                          debug.level = 0)
+  }
   
   # End time measurement (predict)
   end_time_predict = Sys.time()

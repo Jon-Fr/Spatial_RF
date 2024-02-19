@@ -22,12 +22,6 @@ load("Data/WuS_SuB.rda")
 d = WuS_SuB
 fo_lm = fo_lm_WuS_SuB
 
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-max_pd = max(pd_df$lyr.1)
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
-
 # Set buffer 
 buffer = 0
 
@@ -122,7 +116,7 @@ if (pA){
   resid_vmf_au = automap::autofitVariogram(formula = fo_lm, 
                                            input_data = sp_df, 
                                            model = c("Mat", "Exp"),
-                                           kappa = c(0.1,0.2,0.3),
+                                           kappa = c(0.1,0.2,0.3,0.4),
                                            fix.values = c(0, NA, NA),
                                            verbose = TRUE)
   print(plot(emp_svario_resi_fd, pl = FALSE, 
@@ -185,7 +179,7 @@ if (pA){
                                            input_data = sp_df, 
                                            model = c("Mat", "Exp"),
                                            fix.values = c(0, NA, NA),
-                                           kappa = c(0.1, 0.2),
+                                           kappa = c(0.1, 0.2, 0.3, 0.4),
                                            GLS.model = resid_vmf_au["var_model"]$var_model,
                                            verbose = TRUE)
   
@@ -267,7 +261,7 @@ if (pA){
   resid_vmf_au = automap::autofitVariogram(formula = fo_lm, 
                                            input_data = sp_df, 
                                            model = c("Mat", "Exp"),
-                                           kappa = c(0.1,0.2,0.3),
+                                           kappa = c(0.1,0.2,0.3,0.4),
                                            fix.values = c(0, NA, NA),
                                            verbose = TRUE)
   print(plot(emp_svario_resi_fd, pl = FALSE, 
@@ -330,7 +324,7 @@ if (pA){
                                                input_data = sp_df, 
                                                model = c("Mat", "Exp"),
                                                fix.values = c(0, NA, NA),
-                                               kappa = c(0.1, 0.2),
+                                               kappa = c(0.1, 0.2, 0.3, 0.4),
                                                GLS.model = resid_vmf_au["var_model"]$var_model,
                                                verbose = TRUE)
   
@@ -362,7 +356,7 @@ vmf_fun = function(formula, data){
   # OLS residual variogram model fitting
   resid_vmf = automap::autofitVariogram(formula = formula, input_data = sp_df,
                                         model = c("Mat", "Exp"),
-                                        kappa = c(0.1, 0.2),
+                                        kappa = c(0.1, 0.2, 0.3, 0.4),
                                         fix.values = c(0, NA, NA))
   # Return variogram model and training data
   return_list = list(model = resid_vmf["var_model"]$var_model, 

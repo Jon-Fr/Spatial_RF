@@ -9,16 +9,15 @@ p_load("spmoran")
 
 # Additional functions that are not included in packages
 source("auxiliary_functions.R", encoding = "UTF-8")
-# Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB
 
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
+# Fewer decimal places, apply penalty on exponential notation 
+options("scipen"= 999, "digits"=4)
+
+# Load data and formula
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_RF = fo_RF_NuM_L
 
 # Set buffer 
 buffer = 0
@@ -58,7 +57,7 @@ RF_MEv_fun = function(formula, data){
   # Create matrix of spatial point coordinates 
   coord_m = cbind(data$X, data$Y)
   # Calculate Moran eigenvectors and eigenvalues (MEvEv)
-  MEvEv = spmoran::meigen(coords = coord_m, threshold = 0)
+  MEvEv = spmoran::meigen(coords = coord_m, threshold = 0.25)
   # Store eigenvectors in a df and combine it with the data df
   Evec_df = as.data.frame(MEvEv$sf)
   c_data = cbind(data, Evec_df)

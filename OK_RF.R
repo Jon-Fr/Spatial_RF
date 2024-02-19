@@ -24,10 +24,10 @@ d = NuM_L
 fo_RF = fo_RF_NuM_L
 
 # Set buffer 
-buffer = 10000
+buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = 100
+tolerance = "all"
 
 # Set number of permutations 
 n_perm = 10
@@ -49,25 +49,16 @@ if (tolerance == "all"){
 ##
 
 # Weighting distance (based on the investigation of the spatial autocorrelation)
-wd = 13504 # WuS_SuB
-#wd = 8841 # NuM_L
+wd = 3928 # NuM_L
+#wd = 26976 # WuS_SuB
 
 # OK formula
-OK_fo = as.formula(bcNitrate ~ 1)
+OK_fo = as.formula(subMittelwert ~ 1)
 ##
 ## End Model argument preparation)
 ####
 ################################################################################
 ## End (preparation)
-################################################################################
-
-
-################################################################################
-## Combined weighted Ordinary Kriging and Random Forest prediction (OK-RF) 
-## prediction 
-################################################################################
-################################################################################
-## End (OK-RF prediction) 
 ################################################################################
 
 
@@ -91,7 +82,7 @@ RF_vm_fun = function(formula, data, OK_fo){
   # variogram model fitting
   vmf = automap::autofitVariogram(formula = OK_fo, input_data = sp_df,
                                   model = c("Mat", "Exp"),
-                                  kappa = c(0.1,0.2),
+                                  kappa = c(seq(0.1, 0.4, 0.1)),
                                   fix.values = c(0, NA, NA))
   var_model = vmf["var_model"]$var_model
   # Return RF model, variogram model and training data

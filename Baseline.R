@@ -13,10 +13,10 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_lm = fo_lm_WuS_SuB
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_lm = fo_lm_NuM_L
 
 # Set buffer 
 buffer = 0
@@ -28,12 +28,12 @@ tolerance = "all"
 n_perm = 10
 
 # Formula for base RF-model
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
+                  aea20_2 + aea20_8 + aea20_12)
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
@@ -57,13 +57,13 @@ if (tolerance == "all"){
 ################################################################################
 
 ####
-## Standard deviation of the variable of interest, intercept RMSE
+## Standard deviation of the variable of interest, intercept model RMSE
 ##
-s_dev = sd(d$bcNitrate)
+s_dev = sd(d$subMittelwert )
 s_dev
 
 # Formula
-fo_ic = bcNitrate ~ 1
+fo_ic = subMittelwert ~ 1
 
 # Model and prediction function 
 ic_fun = function(formula, data){

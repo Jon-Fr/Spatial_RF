@@ -105,7 +105,7 @@ RF_GLS_fun = function(formula, data, coord_columns, obs_col, covari_columns){
     cov.model = "exponential",
     ntree = 50,
     mtry = round(num_of_cols/3),
-    h = 1)
+    h = 10)
   return(RF_GLS_M)
 }
 

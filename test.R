@@ -37,15 +37,15 @@ median(nn_distances)
 
 
 # Load result
-file_name = "WuS_SuB_sp_cv_MLR_0_+all_10.rda"
-load(paste("Results/WuS_SuB/",file_name, sep = ""))
+file_name = "WuS_SuB_sp_cv_UK_100_+50_10.rda"
+load(paste("Results/bcNitrate/WuS_SuB/",file_name, sep = ""))
 
-RMSE = sp_cv_MLR$error_rep$test_rmse
-
-RMSE
 bygone_time
+RMSE = sp_cv_RF_MEv$error_rep$test_rmse
+RMSE
 
-imp <- summary(sp_cv_OK_RF$importance)
+
+imp <- summary(sp_cv_RF$importance)
 
 # Create a barplot - looks better with greater importance at the top:
 imp <- imp[order(imp$mean.rmse, decreasing = TRUE),]

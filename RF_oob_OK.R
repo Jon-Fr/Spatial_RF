@@ -18,15 +18,10 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB
-
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_RF = fo_RF_NuM_L
 
 # Set buffer 
 buffer = 0
@@ -39,7 +34,6 @@ n_perm = 10
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
-imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -55,7 +49,7 @@ if (tolerance == "all"){
 ##
 
 # Observation column
-obs_col = "bcNitrate"
+obs_col = "subMittelwert"
 ##
 ## End Model argument preparation)
 ####
@@ -100,7 +94,7 @@ RF_oob_OK_pred_fun = function(object, newdata){
   resid_vm = automap::autofitVariogram(formula = oob_resi ~ 1,
                                        input_data = sp_df_train,
                                        model = c("Mat", "Exp"),
-                                       kappa = c(0.1,0.2),
+                                       kappa = c(seq(0.1, 0.4, 0.1)),
                                        fix.values = c(0, NA, NA))
   # Get the model
   resid_vmm = resid_vm["var_model"]$var_model

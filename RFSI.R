@@ -13,15 +13,10 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB
-
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_RF = fo_RF_NuM_L
 
 # Set buffer 
 buffer = 0
@@ -48,14 +43,14 @@ if (tolerance == "all"){
 ## Data and model argument preparation
 ##
 # Observation column
-obs_col = "bcNitrate"
+obs_col = "subMittelwert"
 
 # CRS
 c_r_s = "EPSG:25832"
 
 # Names of the station ID (staid), longitude (X), latitude (Y) 
 # and time columns in data
-d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
+d.staid.x.y.z = c("ID_NuM_L","X","Y",NA)
 ##
 ## End (data and model argument preparation)
 ####

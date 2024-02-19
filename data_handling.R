@@ -109,28 +109,28 @@ WuS_SuB$aea20_13 = (WuS_SuB$aea20 == "13") * 1
 # one level with a relevant number of (above 50) observations
 # aea20 will be adjusted 
 # Formula for linear models without the oblique coordinates
-fo_lm_NuM_L = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
+fo_lm_NuM_L = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + 
                      elevation + nfk + humus + cAckerland + log10_gwn + 
                      agrum_log10_restime + agrum_log10_gwn + agrum_log10_geschw +
                      Ackerland + lbm_class_Gruenland + lbm_class_Unbewachsen + 
                      lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
                      aea20_2 + aea20_8 + aea20_12 + X + Y)
 # Formula for the RF models 
-fo_RF_NuM_L = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
+fo_RF_NuM_L = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + 
                      elevation + nfk + humus + cAckerland + log10_gwn + 
                      agrum_log10_restime + agrum_log10_gwn + agrum_log10_geschw +
                      Ackerland + lbm_class_Gruenland + lbm_class_Unbewachsen + 
                      lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
                      aea20_2 + aea20_8 + aea20_12 + X + Y + tc45 + tc315)
 # Formula for linear models without the oblique coordinates
-fo_lm_WuS_SuB = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
+fo_lm_WuS_SuB = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + 
                            elevation + nfk + humus + cAckerland + log10_gwn + 
                            agrum_log10_restime + agrum_log10_gwn + agrum_log10_geschw +
                            Ackerland + lbm_class_Gruenland + lbm_class_Unbewachsen + 
                            lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
                            aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
 # Formula for the RF models 
-fo_RF_WuS_SuB = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + 
+fo_RF_WuS_SuB = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + 
                            elevation + nfk + humus + cAckerland + log10_gwn + 
                            agrum_log10_restime + agrum_log10_gwn + agrum_log10_geschw +
                            Ackerland + lbm_class_Gruenland + lbm_class_Unbewachsen + 

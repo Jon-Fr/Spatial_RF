@@ -21,15 +21,10 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB
-
-# Get information about the prediction distance 
-pd_df = info_d_WuS_SuB$predDist_df
-mean_pd = mean(pd_df$lyr.1)
-med_pd = median(pd_df$lyr.1)
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_RF = fo_RF_NuM_L
 
 # Set buffer 
 buffer = 0
@@ -53,16 +48,16 @@ if (tolerance == "all"){
 ## Model argument preparation
 ##
 # Adjusted RF formula
-fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
                   tc45 + tc315 + ok_inter_pred + ok_inter_var + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
+                  aea20_2 + aea20_8 + aea20_12)
 
 # OK formula
-ok_fo = as.formula(bcNitrate ~ 1)
+ok_fo = as.formula(subMittelwert ~ 1)
 ##
 ## End Model argument preparation)
 ####
@@ -105,7 +100,7 @@ loo_OK_fun = function(data, buffer_dist, ok_fo, nno){
                       resid_vm = automap::autofitVariogram(formula = ok_fo, 
                                                   input_data = train_sp_df, 
                                                   model = c("Mat", "Exp"),
-                                                  kappa = c(0.1,0.2),
+                                                  kappa = c(seq(0.1, 0.4, 0.1)),
                                                   fix.values = c(0, NA, NA))
                       # Get the model
                       resid_vmm = resid_vm["var_model"]$var_model
@@ -179,7 +174,7 @@ RF_looOK_fun = function(formula, data, ok_fo){
   resid_vm = automap::autofitVariogram(formula = ok_fo, 
                                        input_data = sp_df, 
                                        model = c("Mat", "Exp"),
-                                       kappa = c(0.1,0.2),
+                                       kappa = c(seq(0.1, 0.4, 0.1)),
                                        fix.values = c(0, NA, NA))
   # Create return list
   return_list = list(RF_m = RF_model, resid_vmm = resid_vm["var_model"]$var_model, 

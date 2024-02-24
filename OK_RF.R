@@ -27,13 +27,23 @@ fo_RF = fo_RF_NuM_L
 buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
+
+# Use another error fun (should only be true for the calculation of the 
+# retransformation RMSE)
+re_bc = TRUE
+if (re_bc){
+  error_fun = err_re_bc
+} else{
+  error_fun = err_default
+}
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -49,11 +59,14 @@ if (tolerance == "all"){
 ##
 
 # Weighting distance (based on the investigation of the spatial autocorrelation)
-wd = 3928 # NuM_L
+#wd = 3928 # NuM_L
+#wd = 8841 # NuM_L_bc  
+
 #wd = 26976 # WuS_SuB
+#wd = 13504 # WuS_SuB_bc
 
 # OK formula
-OK_fo = as.formula(subMittelwert ~ 1)
+OK_fo = as.formula(bcNitrate ~ 1)
 ##
 ## End Model argument preparation)
 ####
@@ -144,7 +157,8 @@ sp_cv_OK_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                      imp_permutations = n_perm,
                                      imp_variables = imp_vars_RF,
                                      imp_sample_from = "all",
-                                     distance = TRUE)
+                                     distance = TRUE,
+                                     err_fun = error_fun)
 
 # Get test RMSE
 test_RMSE = sp_cv_OK_RF$error_rep$test_rmse

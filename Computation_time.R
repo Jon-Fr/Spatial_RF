@@ -9,7 +9,6 @@ p_load("meteo")
 p_load("sp")
 p_load("sf")
 p_load("gstat")       
-p_load("nlme")
 p_load("automap")
 p_load("parallel")
 p_load("doParallel")
@@ -58,7 +57,7 @@ ex_v_columns = c("crestime", "cgwn", "cgeschw", "log10carea", "elevation",
 num_of_ex_v = length(ex_v_columns )
 
 # Observation column for RFSI, RF-oob-OK and RF-GLS
-obs_col = "subMittelwert "
+obs_col = "subMittelwert"
 
 # CRS for RFSI
 c_r_s = "EPSG:25832"
@@ -68,15 +67,15 @@ c_r_s = "EPSG:25832"
 d.staid.x.y.z = c("ID_WuS_SuB","X","Y",NA)
 
 # Weighting distance for OK-RF (based on the investigation of the spatial autocorrelation)
-wd =  # WuS_SuB
+wd = 26976 # WuS_SuB
 
 ####
 ## Sample a training and test/prediction subset 
 ##
 
 # Set the size of the subsets
-n_train = 1000
-n_pred = 1000
+n_train = 250
+n_pred = 250
 n_total = n_train + n_pred
 
 # Set seed
@@ -118,7 +117,7 @@ loo_OK_RF = TRUE
 RF_oob_OK = TRUE
 OK_RF = TRUE
 UK = TRUE
-RF_GLS  = FALSE
+RF_GLS  = TRUE
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -133,6 +132,7 @@ if (RF_GLS){
   # Start time measurement (train)
   start_time_train = Sys.time()
   
+  for (i in 1:10){
   # Train model
   RF_GLS_M = RandomForestsGLS::RFGLS_estimate_spatial(
     coords = c_matrix_train,
@@ -141,7 +141,7 @@ if (RF_GLS){
     param_estimate = TRUE,
     cov.model = "exponential",
     mtry = floor(sqrt(num_of_ex_v)),
-    h = 10)
+    h = 20)
   
   # End time measurement (train)
   end_time_train = Sys.time()
@@ -149,6 +149,7 @@ if (RF_GLS){
   
   # Start time measurement (predict)
   start_time_predict = Sys.time()
+  }
   
   for (i in 1:1000){
     # Prediction
@@ -481,19 +482,20 @@ loo_OK_fun = function(data, buffer_dist, ok_fo, nno){
                             }
 }
 
-# Create a copy of the train df
+# Create a copy of the train and pred df
 d_train_loo = d_train
+d_pred_loo = d_pred
 
 if (loo_OK_RF){
   # Start time measurement (preprocessing)
   start_time_pp = Sys.time()
   
-  for (i in 1:100){
+  for (i in 1:10){
   # Setup backend to use many processors
   totalCores = parallel::detectCores()
   
   # Leave some cores to reduce computer load
-  cluster = parallel::makeCluster(totalCores-2) 
+  cluster = parallel::makeCluster(totalCores) 
   doParallel::registerDoParallel(cluster)
   
   # Execute loo-OK function
@@ -515,7 +517,7 @@ if (loo_OK_RF){
   ## Normal OK for the prediction data
   # Create spatial points dfs
   sp_df_train_loo = sp::SpatialPointsDataFrame(d_train_loo[,c("X","Y")], d_train_loo)
-  sp_df_pred_loo = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
+  sp_df_pred_loo = sp::SpatialPointsDataFrame(d_pred_loo[,c("X","Y")], d_pred_loo)
   
   # Fit variogram model
   resid_vm = automap::autofitVariogram(formula = ok_fo,
@@ -527,14 +529,14 @@ if (loo_OK_RF){
   resid_vmm = resid_vm["var_model"]$var_model
   
   # Ordinary Kriging interpolation
-  ok_pred = gstat::krige(formula = ok_fo, sp_df_loo, 
+  ok_pred = gstat::krige(formula = ok_fo, sp_df_train_loo, 
                          model = resid_vmm, 
-                         newdata = sp_df_pred_temp, 
+                         newdata = sp_df_pred_loo, 
                          debug.level = 0)
   
   # Add the OK results to the predcition df 
-  d_pred$ok_inter_pred = ok_pred$var1.pred 
-  d_pred$ok_inter_var = ok_pred$var1.var
+  d_pred_loo$ok_inter_pred = ok_pred$var1.pred 
+  d_pred_loo$ok_inter_var = ok_pred$var1.var
   }
   
   # End time measurement (preprocessing)
@@ -559,7 +561,7 @@ if (loo_OK_RF){
   
   for (i in 1:1000){
   # Prediction
-  loo_OK_RF_predi = predict(object = loo_OK_RF_model, data = d_pred)
+  loo_OK_RF_predi = predict(object = loo_OK_RF_model, data = d_pred_loo)
   }
   
   # End time measurement (predict)

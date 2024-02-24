@@ -27,38 +27,75 @@ fo_lm_WuS_SuB = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10care
 #N = NuM_L
 #W = WuS_SuB
 
-# Get information about the prediction distance 
+## Get information about the prediction distance an plot histograms
 pd_df_N = info_d_NuM_L$predDist_df
+# Part of the Area below range value of variogram model
+br_vec_N = pd_df_N[pd_df_N$lyr.1 <3928, ]
+pbr_N = length(br_vec_N)/nrow(pd_df_N)
+
+first_quartile_N = quantile(x = pd_df_N$lyr.1, probs = c(0.25))
 third_quartile_N = quantile(x = pd_df_N$lyr.1, probs = c(0.75))
 tq_pd_N = third_quartile_N
 max_pd_N = max(pd_df_N$lyr.1)
 mean_pd_N = mean(pd_df_N$lyr.1)
 med_pd_N = median(pd_df_N$lyr.1)
 hist_N = hist(pd_df_N$lyr.1, breaks = (135))
-color_N = ifelse(hist_N$breaks <=med_pd_N, "ivory", ifelse(hist_N$breaks <=third_quartile_N & hist_N$breaks > med_pd_N, "gray39", "#333333"))
-par(mar = c(3.1,4.4,1,0.5)) # bottom, left, top, right margins
-plot(hist_N, xlab = "", ylab = expression("Anzahl [100 m"^2 *" Rasterzellen]"), 
-     main = "", col = color_N, xaxt = "n", yaxt = "n", xlim = c(0, 175000))
-axis(1, at = c(0, 25000, 50000, 75000, 100000, 125000, 150000, 175000))
-axis(2, at = c(0, 500000, 1000000, 1500000, 2000000, 2500000))
-legend(x = "topright" , legend = c("a)"), bty = "n")
+color_N = ifelse(hist_N$breaks <=first_quartile_N, "white", ifelse(hist_N$breaks <=med_pd_N & hist_N$breaks > first_quartile_N, "snow3", ifelse(hist_N$breaks <=third_quartile_N & hist_N$breaks > med_pd_N, "gray57", "#333333")))
 
 pd_df_W = info_d_WuS_SuB$predDist_df
+# Part of the Area below range value of variogram model
+br_vec_W = pd_df_W[pd_df_W$lyr.1 <26976, ]
+pbr_W = length(br_vec_W)/nrow(pd_df_W)
+
+first_quartile_W = quantile(x = pd_df_W$lyr.1, probs = c(0.25))
 third_quartile_W = quantile(x = pd_df_W$lyr.1, probs = c(0.75))
 tq_pd_W = third_quartile_W
 max_pd_W = max(pd_df_W$lyr.1)
-mean_pd_W = mean(pd_df_W$lyr.1)
+med_pd_W = mean(pd_df_W$lyr.1)
 med_pd_W = median(pd_df_W$lyr.1)
 hist_W = hist(pd_df_W$lyr.1, breaks = (173))
-color_W = ifelse(hist_W$breaks <=med_pd_W, "ivory", ifelse(hist_W$breaks <=third_quartile_W & hist_W$breaks > med_pd_W, "gray39", "#333333"))
-par(mar = c(4.1,4.4,0,0.5)) # bottom, left, top, right margins
-plot(hist_W, xlab = "Entfernung [m]", ylab = expression("Anzahl [100 m"^2 *" Rasterzellen]"), 
-     main = "", col = color_W, xaxt = "n", yaxt = "n",  xlim = c(0, 175000), ylim = c(0, 1250000))
-axis(1, at = c(0, 25000, 50000, 75000, 100000, 125000, 150000, 175000))
-axis(2, at = c(0, 250000, 500000, 750000, 1000000, 1250000))
-legend(x = "topright" , legend = c("b)"), bty = "n")
+color_W = ifelse(hist_W$breaks <=first_quartile_W, "white", ifelse(hist_W$breaks <=med_pd_W & hist_W$breaks > first_quartile_W, "snow3", ifelse(hist_W$breaks <=third_quartile_W & hist_W$breaks > med_pd_W, "gray57", "#333333")))
 
-par(mfrow = c(2,1))
+## Set plot layout
+layout_mat <- matrix(c(1,2,1,3), nrow = 2, ncol = 2,
+                     byrow = TRUE)
+layout_mat
+
+my_lay = layout(mat = layout_mat, 
+                 heights = c(2.5, 2.5),
+                 widths = c(0.5, 4.5), respect =FALSE)
+layout.show(my_lay)
+
+# First plot
+par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
+plot(NULL, ylab = "", bty = "n", 
+     xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
+mtext(expression("Anzahl an 100 m"^2 *" Rasterzellen in tausend"),
+      side = 4, line = -4, col = 1, cex = 1.1)
+
+# Second plot
+par(mar = c(2, 0, 2, 0)) # bottom, left, top, right margins
+plot(hist_N, xlab = "", ylab = "", 
+     main = "", col = color_N, xaxt = "n", yaxt = "n", xlim = c(0, 175000))
+axis(1, at = c(0, 25000, 50000, 75000, 100000, 125000, 150000, 175000),
+     labels = c("", "", "", "", "", "", "", ""), cex.asis = 1.2)#, lwd.ticks = 0)
+axis(2, at = c(0, 500000, 1000000, 1500000, 2000000, 2500000), 
+     labels = c(0, 500, 100, 150, 200, 250), cex.asis = 1.2)
+legend(x = "topright" , legend = c("a)"), bty = "n", cex = 1.25)
+legend(x = "top", cex = 1.25,
+       legend = c("1. Quartil", "2. Quartil", "3. Quartil", "4. Quartil"),
+       fill = c("white", "snow3", "gray57", "#333333"), bty = "n")
+
+# Third plot
+par(mar = c(4, 0, 0, 0)) # bottom, left, top, right margins
+plot(hist_W, xlab = "", ylab = "", 
+     main = "", col = color_W, xaxt = "n", yaxt = "n",  xlim = c(0, 175000), ylim = c(0, 1250000))
+axis(1, at = c(0, 25000, 50000, 75000, 100000, 125000, 150000, 175000),
+     labels = c(0, 25, 50, 75, 100, 125, 150, 175), cex.axis = 1.2)
+axis(2, at = c(0, 250000, 500000, 750000, 1000000, 1250000), 
+     labels = c(0, 25, 50, 75, 100, 125), cex.axis = 1.2)
+title(xlab = "Vorhersagedistanz [km]", mgp = c(2.5, 2.5, 2.5), cex.lab = 1.25) 
+legend(x = "topright" , legend = c("b)"), bty = "n", cex = 1.25)
 
 # Create spatial points dfs 
 sp_df_W = sp::SpatialPointsDataFrame(WuS_SuB[,c("X","Y")], WuS_SuB) 
@@ -71,6 +108,7 @@ sp_df_N = sp::SpatialPointsDataFrame(NuM_L[,c("X","Y")], NuM_L)
 ################################################################################
 ## Investigation of the spatial autocorrelation
 ################################################################################
+par(mfrow = c(1, 1))
 ####
 ## Empirical semivariogram (EmSv) of the variable of interest
 ##
@@ -161,24 +199,51 @@ resid_vmf_W = automap::autofitVariogram(formula = mlr_resi~1,
 vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist = 50000)
 vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 50000)
 
-# Plots
-par(mar = c(4.0,4,0.5,0.5)) # bottom, left, top, right margins
+## Set plot layout
+layout_mat <- matrix(c(1,2,1,3), nrow = 2, ncol = 2,
+                     byrow = TRUE)
+layout_mat
 
+my_lay = layout(mat = layout_mat, 
+                heights = c(2.5, 2.5),
+                widths = c(0.5, 4.5), respect =FALSE)
+layout.show(my_lay)
+
+# First plot
+par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
+plot(NULL, ylab = "", bty = "n", 
+     xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
+mtext("Semivarianz", side = 4, line = -4, col = 1, cex = 1.1)
+
+# Second plot
+par(mar = c(2, 0, 2, 0.2)) # bottom, left, top, right margins
 plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma, xlab = "", 
-     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0, 3500))
+     ylab = "", xlim = c(1200,49000), ylim = c(0, 3500), xaxt = "n",
+     yaxt = "n")
+axis(1, at = c(0, 10000, 20000, 30000, 40000, 50000),
+     labels = c("", "", "", "", "", ""), cex.axis = 1.2)
+axis(2, at = c(0, 500, 1000, 1500, 2000, 2500, 3000, 3500), 
+     labels = c(0, "", 1000, "", 2000, "", 3000, ""), cex.axis = 1.2)
 lines(x = vm_points_N$dist,
       y = vm_points_N$gamma,
       col = ("#0000FF"),
       lty = 1)
-legend(x = "bottomright" , legend = c("a)"), bty = "n")
+legend(x = "bottomright" , legend = c("a)"), bty = "n", cex = 1.25)
 
-plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, xlab = "Entfernung [m]", 
-     ylab = "Semivarianz", xlim = c(1200,49000), ylim = c(0, 300))
+# Third Plot
+par(mar = c(4, 0, 0, 0.2)) # bottom, left, top, right margins
+plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, xlab = "",
+     ylab = "", xlim = c(1200,49000), ylim = c(0, 300), xaxt = "n", yaxt = "n")
+axis(1, at = c(0, 10000, 20000, 30000, 40000, 50000), 
+     labels = c(0, 10, 20, 30, 40, 50), cex.axis = 1.2)
+axis(2, at = c(0, 50, 100, 150, 200, 250, 300, 350), 
+     labels = c(0, "", 100, "", 200, "", 300, ""), cex.axis = 1.2)
 lines(x = vm_points_W$dist,
       y = vm_points_W$gamma,
       col = ("#0000FF"),
       lty = 1)
-legend(x = "bottomright" , legend = c("b)"), bty = "n")
+legend(x = "bottomright" , legend = c("b)"), bty = "n", cex = 1.25)
+title(xlab = "Entfernung [km]", mgp = c(2.5, 2.5, 2.5), cex.lab = 1.25) 
 ##
 ## End (EmSv of the residuals of a multiple linear regression model)
 ####

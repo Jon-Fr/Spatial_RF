@@ -7,6 +7,7 @@ p_load("sp")
 p_load("sf")
 p_load("terra")
 p_load("sperrorest")
+p_load("concaveman")
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -114,6 +115,28 @@ boxcox <- function(x, lambda) {
 }
 ##
 ## End (Box-Cox functions)
+####
+
+
+
+####
+## Error function for the calculation of the RMSE of the bcNitrate based 
+## prediction on the original scale. The RMSE is not calculate but the
+## prediction is returned, so that the RMSE can be calculated afterwards
+##
+err_re_bc = function(obs, pred) {
+  list(
+    bias = mean(obs - pred),
+    obs = mean(obs),
+    pred = mean(pred),
+    count = length(obs)
+  )
+}
+
+
+##
+## End (Error function for the calculation of the RMSE of the bcNitrate based
+## prediction on the original scale)
 ####
 
 ####

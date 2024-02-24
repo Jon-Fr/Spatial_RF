@@ -24,16 +24,25 @@ options("scipen"= 999, "digits"=4)
 data_set = "NuM_L"
 load("Data/NuM_L.rda")
 d = NuM_L
-fo_RF = fo_RF_NuM_L
+fo_RF = fo_RF_NuM_L_bc
 
 # Set buffer 
 buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
+
+# Use another error fun (should only be true for the calculation of the 
+# retransformation RMSE)
+re_bc = TRUE
+if (re_bc){
+  error_fun = err_re_bc
+} else{
+  error_fun = err_default
+}
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -48,7 +57,7 @@ if (tolerance == "all"){
 ## Model argument preparation
 ##
 # Adjusted RF formula
-fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
@@ -57,7 +66,7 @@ fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevati
                   aea20_2 + aea20_8 + aea20_12)
 
 # OK formula
-ok_fo = as.formula(subMittelwert ~ 1)
+ok_fo = as.formula(bcNitrate ~ 1)
 ##
 ## End Model argument preparation)
 ####
@@ -66,6 +75,7 @@ ok_fo = as.formula(subMittelwert ~ 1)
 # adjusted formula is used because the importance of the OK variables is  
 # evaluated together with the X and Y coordinate 
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -220,7 +230,8 @@ sp_cv_loo_OK_RF = sperrorest::sperrorest(formula = fo, data = d,
                                          imp_permutations = n_perm,
                                          imp_variables = imp_vars_RF,
                                          imp_sample_from = "all",
-                                         distance = TRUE)
+                                         distance = TRUE,
+                                         err_fun = error_fun)
 
 # Get test RMSE
 test_RMSE = sp_cv_loo_OK_RF$error_rep$test_rmse

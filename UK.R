@@ -17,19 +17,28 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_lm = fo_lm_WuS_SuB
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_lm = fo_lm_NuM_L_bc
 
 # Set buffer 
 buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
+
+# Use another error fun (should only be true for the calculation of the 
+# retransformation RMSE)
+re_bc = TRUE
+if (re_bc){
+  error_fun = err_re_bc
+} else{
+  error_fun = err_default
+}
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
@@ -394,7 +403,8 @@ sp_cv_UK = sperrorest::sperrorest(formula = fo_lm, data = d,
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_lm,
                                   imp_sample_from = "all",
-                                  distance = TRUE)
+                                  distance = TRUE,
+                                  err_fun = error_fun)
 
 # Get test RMSE
 test_RMSE = sp_cv_UK$error_rep$test_rmse

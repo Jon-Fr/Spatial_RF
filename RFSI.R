@@ -16,19 +16,29 @@ options("scipen"= 999, "digits"=4)
 data_set = "NuM_L"
 load("Data/NuM_L.rda")
 d = NuM_L
-fo_RF = fo_RF_NuM_L
+fo_RF = fo_RF_NuM_L_bc
 
 # Set buffer 
 buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
+
+# Use another error fun (should only be true for the calculation of the 
+# retransformation RMSE)
+re_bc = TRUE
+if (re_bc){
+  error_fun = err_re_bc
+} else{
+  error_fun = err_default
+}
 
 # Calculate importance for these variables
 imp_vars_RF = all.vars(fo_RF)[-1]
+imp_vars_RF = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -43,7 +53,7 @@ if (tolerance == "all"){
 ## Data and model argument preparation
 ##
 # Observation column
-obs_col = "subMittelwert"
+obs_col = "bcNitrate"
 
 # CRS
 c_r_s = "EPSG:25832"
@@ -130,7 +140,8 @@ sp_cv_RFSI = sperrorest::sperrorest(formula = fo_RF, data = d,
                                     imp_permutations = n_perm,
                                     imp_variables = imp_vars_RF,
                                     imp_sample_from = "all",
-                                    distance = TRUE)
+                                    distance = TRUE,
+                                    err_fun = error_fun)
 
 # Get test RMSE
 test_RMSE = sp_cv_RFSI$error_rep$test_rmse

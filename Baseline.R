@@ -16,19 +16,28 @@ options("scipen"= 999, "digits"=4)
 data_set = "NuM_L"
 load("Data/NuM_L.rda")
 d = NuM_L
-fo_lm = fo_lm_NuM_L
+fo_lm = fo_lm_NuM_L_bc
 
 # Set buffer 
 buffer = 0
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = "all"
+tolerance = 50
 
 # Set number of permutations 
-n_perm = 10
+n_perm = 0
+
+# Use another error fun (should only be true for the calculation of the 
+# retransformation RMSE)
+re_bc = TRUE
+if (re_bc){
+  error_fun = err_re_bc
+} else{
+  error_fun = err_default
+}
 
 # Formula for base RF-model
-fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation + 
                   nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
@@ -37,7 +46,9 @@ fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevati
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
+imp_vars_lm = NULL
 imp_vars_bRF = all.vars(fo)[-1]
+imp_vars_lm = NULL
 
 # Set partition function and sample arguments 
 if (tolerance == "all"){
@@ -119,7 +130,8 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"),
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_lm,
                                   imp_sample_from = "all",
-                                  distance = TRUE)
+                                  distance = TRUE,
+                                  err_fun = error_fun)
 
 # Get test RMSE
 test_RMSE = sp_cv_MLR$error_rep$test_rmse
@@ -177,7 +189,8 @@ sp_cv_bRF = sperrorest::sperrorest(formula = fo, data = d,
                                   imp_permutations = n_perm,
                                   imp_variables = imp_vars_bRF,
                                   imp_sample_from = "all",
-                                  distance = TRUE)
+                                  distance = TRUE,
+                                  err_fun = error_fun)
 
 # Get test RMSE
 test_RMSE = sp_cv_bRF$error_rep$test_rmse

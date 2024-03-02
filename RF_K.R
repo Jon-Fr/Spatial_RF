@@ -13,10 +13,10 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "NuM_L"
-load("Data/NuM_L.rda")
-d = NuM_L
-fo_RF = fo_RF_NuM_L_bc
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB_bc
 
 # Set buffer 
 buffer = 0
@@ -93,10 +93,6 @@ sp_cv_RF = sperrorest::sperrorest(formula = fo_RF, data = d,
                                   imp_sample_from = "all",
                                   distance = TRUE,
                                   err_fun = error_fun)
-
-# Get test RMSE
-test_RMSE = sp_cv_RF$error_rep$test_rmse
-test_RMSE
 
 # End time measurement
 end_time = Sys.time()

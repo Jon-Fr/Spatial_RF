@@ -74,8 +74,8 @@ wd = 26976 # WuS_SuB
 ##
 
 # Set the size of the subsets
-n_train = 250
-n_pred = 250
+n_train = 1000
+n_pred = 1000
 n_total = n_train + n_pred
 
 # Set seed
@@ -108,16 +108,16 @@ ex_v_matrix_pred = data.matrix(d_pred[, ex_v_columns])
 observations = d_train[, obs_col]
 
 # Decide which models to run
-MLR = TRUE
-bRF = TRUE
-RF_K = TRUE
-RFSI = TRUE
-RF_MEv = TRUE
-loo_OK_RF = TRUE
-RF_oob_OK = TRUE
-OK_RF = TRUE
+MLR = FALSE
+bRF = FALSE
+RF_K = FALSE
+RFSI = FALSE
+RF_MEv = FALSE
+loo_OK_RF = FALSE
+RF_oob_OK = FALSE
+OK_RF = FALSE
 UK = TRUE
-RF_GLS  = TRUE
+RF_GLS  = FALSE
 ################################################################################
 ## End (preparation)
 ################################################################################
@@ -507,7 +507,7 @@ if (loo_OK_RF){
   # Stop cluster
   stopCluster(cluster)
   
-  # Add the llo-OK results to the train df 
+  # Add the loo-OK results to the train df 
   loo_ok_res_vec = unlist(loo_ok_res)
   ok_inter_pred = loo_ok_res_vec[seq(1, length(loo_ok_res_vec), 2)]
   ok_inter_var = loo_ok_res_vec[seq(2, length(loo_ok_res_vec), 2)]
@@ -732,19 +732,29 @@ if (OK_RF){
 ## UK
 ################################################################################
 if (UK){
+  # Start time measurement (train)
+  start_time_train = Sys.time()
+  
+  for (i in 1:1000){
+    # OLS residual variogram model fitting
+    resid_vmf = automap::autofitVariogram(formula = fo_lm, 
+                                          input_data = sp_df_train,
+                                          model = c("Mat", "Exp"),
+                                          kappa = c(seq(0.1, 0.4, 0.1)),
+                                          fix.values = c(0, NA, NA))
+    # Get the variogram model 
+    resid_vmm = resid_vmf["var_model"]$var_model
+  }
+  
+  # End time measurement (train)
+  end_time_train = Sys.time()
+  bygone_time_train = end_time_train - start_time_train
+  
+  
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
   for (i in 1:1000){
-  # OLS residual variogram model fitting
-  resid_vmf = automap::autofitVariogram(formula = fo_lm, 
-                                        input_data = sp_df_train,
-                                        model = c("Mat", "Exp"),
-                                        kappa = c(seq(0.1, 0.4, 0.1)),
-                                        fix.values = c(0, NA, NA))
-  # Get the variogram model 
-  resid_vmm = resid_vmf["var_model"]$var_model
-  
   # UK prediction
   uk_pred = gstat::krige(formula = fo_lm, 
                          locations = sp_df_train,
@@ -761,8 +771,184 @@ if (UK){
   file_name = paste("Results/", data_set, "_CT_UK_", as.character(n_total),
                     ".rda", sep = "")
   # Save result 
-  save( bygone_time_predict, file = file_name)
+  save(bygone_time_train, bygone_time_predict, file = file_name)
 }
 ################################################################################
 ## End (UK)
+################################################################################
+
+
+################################################################################
+## Post processing of the results
+################################################################################
+
+# Create vectors for the results
+loo_OK_RF_pre_pro = c()
+RF_MEv_pre_pro = c()
+RF_pre_pro = c(0, 0, 0)
+bRF_pre_pro = c(0, 0, 0)
+RF_GLS_pre_pro = c(0, 0, 0)
+RF_oob_OK_pre_pro = c(0, 0, 0)
+MLR_pre_pro = c(0, 0, 0)
+OK_RF_pre_pro = c(0, 0, 0)
+RFSI_pre_pro = c(0, 0, 0)
+UK_pre_pro = c(0, 0, 0)
+
+
+RF_train = c()
+bRF_train = c()
+loo_OK_RF_train = c()
+RF_MEv_train = c()
+RF_GLS_train = c()
+RF_oob_OK_train = c()
+MLR_train = c()
+OK_RF_train = c()
+RFSI_train = c()
+UK_train = c()
+
+RF_predi = c()
+bRF_predi = c()
+loo_OK_RF_predi = c()
+RF_MEv_predi = c()
+RF_GLS_predi = c()
+RF_oob_OK_predi = c()
+MLR_predi = c()
+OK_RF_predi = c() 
+RFSI_predi = c()
+UK_predi = c()
+
+RF_comp = c()
+bRF_comp = c()
+loo_OK_RF_comp = c()
+RF_MEv_comp = c()
+RF_GLS_comp = c()
+RF_oob_OK_comp = c()
+MLR_comp = c()
+OK_RF_comp = c() 
+RFSI_comp = c()
+UK_comp = c()
+
+# Vector of the first part of the file names
+f_names_vec1 = c("WuS_SuB_CT_bRF", "WuS_SuB_CT_UK", "WuS_SuB_CT_MLR", 
+                 "WuS_SuB_CT_RF", "WuS_SuB_CT_RF_GLS", "WuS_SuB_CT_OK_RF", 
+                 "WuS_SuB_CT_RF_oob_OK", "WuS_SuB_CT_RFSI", "WuS_SuB_CT_RF_MEv",
+                 "WuS_SuB_CT_loo_OK_RF")
+
+# Vector of the second part of the file names
+f_names_vec2 = c("_500.rda", "_1000.rda", "_2000.rda") 
+
+# for loops
+for (i1 in f_names_vec1){
+  for (i2 in f_names_vec2){
+    # Complete file name
+    f_name = paste("Results/CT/", i1, i2, sep = "")
+    # Load file
+    load(f_name)
+    # bRF
+    if (i1 == "WuS_SuB_CT_bRF"){
+      bRF_train = append(bRF_train, bygone_time_train)
+      bRF_predi = append(bRF_predi, bygone_time_predict)
+      bRF_comp = append(bRF_comp, bygone_time_train + bygone_time_predict)
+    # RF
+    } else if (i1 == "WuS_SuB_CT_RF"){
+      RF_train = append(RF_train, bygone_time_train)
+      RF_predi = append(RF_predi, bygone_time_predict)
+      RF_comp = append(RF_comp, bygone_time_train + bygone_time_predict)
+      # MLR
+    } else if (i1 == "WuS_SuB_CT_MLR"){
+      MLR_train = append(MLR_train, bygone_time_train)
+      MLR_predi = append(MLR_predi, bygone_time_predict)
+      MLR_comp = append(MLR_comp, bygone_time_train + bygone_time_predict)
+      # RF_oob_OK
+    } else if (i1 == "WuS_SuB_CT_RF_oob_OK"){
+      RF_oob_OK_train = append(RF_oob_OK_train, bygone_time_train)
+      RF_oob_OK_predi = append(RF_oob_OK_predi, bygone_time_predict)
+      RF_oob_OK_comp = append(RF_oob_OK_comp, bygone_time_train + 
+                                bygone_time_predict)
+      # OK_RF
+    } else if (i1 == "WuS_SuB_CT_OK_RF"){
+      OK_RF_train = append(OK_RF_train, bygone_time_train)
+      OK_RF_predi = append(OK_RF_predi, bygone_time_predict)
+      OK_RF_comp = append(OK_RF_comp, bygone_time_train + bygone_time_predict)
+      # RF_GLS
+    } else if (i1 == "WuS_SuB_CT_RF_GLS"){
+      RF_GLS_train = append(RF_GLS_train, bygone_time_train)
+      RF_GLS_predi = append(RF_GLS_predi, bygone_time_predict)
+      RF_GLS_comp = append(RF_GLS_comp, bygone_time_train + bygone_time_predict)
+      # RFSI
+    } else if (i1 == "WuS_SuB_CT_RFSI"){
+      RFSI_train = append(RFSI_train, bygone_time_train)
+      RFSI_predi = append(RFSI_predi, bygone_time_predict)
+      RFSI_comp = append(RFSI_comp, bygone_time_train + bygone_time_predict)
+      # UK
+    } else if (i1 == "WuS_SuB_CT_UK"){
+      UK_train = append(UK_train, bygone_time_train)
+      UK_predi = append(UK_predi, bygone_time_predict)
+      UK_comp = append(UK_comp, bygone_time_train + bygone_time_predict)
+      # RF_MEv
+    } else if (i1 == "WuS_SuB_CT_RF_MEv"){
+      RF_MEv_train = append(RF_MEv_train, bygone_time_train)
+      RF_MEv_predi = append(RF_MEv_predi, bygone_time_predict)
+      RF_MEv_pre_pro = append(RF_MEv_pre_pro, bygone_time_pp)
+      RF_MEv_comp = append(RF_MEv_comp, bygone_time_train + 
+                             bygone_time_predict + 
+                             bygone_time_pp)
+      # loo_OK_RF
+    } else if (i1 == "WuS_SuB_CT_loo_OK_RF"){
+      loo_OK_RF_train = append(loo_OK_RF_train, bygone_time_train)
+      loo_OK_RF_predi = append(loo_OK_RF_predi, bygone_time_predict)
+      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro, bygone_time_pp)
+      loo_OK_RF_comp = append(loo_OK_RF_comp, bygone_time_train + 
+                                bygone_time_predict + 
+                                bygone_time_pp)
+    }
+  }
+}
+
+# Create data frames 
+CT_df_comp = data.frame(loo_OK_RF_comp,
+                           RF_MEv_comp,
+                           RF_comp,
+                           bRF_comp,
+                           RF_GLS_comp,
+                           RF_oob_OK_comp,
+                           MLR_comp,
+                           OK_RF_comp,
+                           RFSI_comp,
+                           UK_comp)
+
+CT_df_pre_pro = data.frame(loo_OK_RF_pre_pro,
+                           RF_MEv_pre_pro,
+                           RF_pre_pro,
+                           bRF_pre_pro,
+                           RF_GLS_pre_pro,
+                           RF_oob_OK_pre_pro,
+                           MLR_pre_pro,
+                           OK_RF_pre_pro,
+                           RFSI_pre_pro,
+                           UK_pre_pro)
+
+CT_df_train = data.frame(loo_OK_RF_train,
+                           RF_MEv_train,
+                           RF_train,
+                           bRF_train,
+                           RF_GLS_train,
+                           RF_oob_OK_train,
+                           MLR_train,
+                           OK_RF_train,
+                           RFSI_train,
+                           UK_train)
+
+CT_df_predi = data.frame(loo_OK_RF_predi,
+                           RF_MEv_predi,
+                           RF_predi,
+                           bRF_predi,
+                           RF_GLS_predi,
+                           RF_oob_OK_predi,
+                           MLR_predi,
+                           OK_RF_predi,
+                           RFSI_predi,
+                           UK_predi)
+################################################################################
+## End (post processing of the results)
 ################################################################################

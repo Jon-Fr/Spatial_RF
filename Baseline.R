@@ -42,7 +42,7 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_2 + aea20_8 + aea20_12)
+                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]
@@ -95,7 +95,7 @@ sp_cv_ic = sperrorest::sperrorest(formula = fo_ic, data = d, coords = c("X","Y")
                                    distance = TRUE)
 
 # Get test RMSE
-test_RMSE = sp_cv_ic$error_rep$test_rmse
+test_RMSE = summary(sp_cv_ic$error_fold)
 test_RMSE
 ##
 ## 
@@ -132,10 +132,6 @@ sp_cv_MLR = sperrorest::sperrorest(formula = fo, data = d, coords = c("X","Y"),
                                   imp_sample_from = "all",
                                   distance = TRUE,
                                   err_fun = error_fun)
-
-# Get test RMSE
-test_RMSE = sp_cv_MLR$error_rep$test_rmse
-test_RMSE
 
 # End time measurement
 end_time = Sys.time()
@@ -191,10 +187,6 @@ sp_cv_bRF = sperrorest::sperrorest(formula = fo, data = d,
                                   imp_sample_from = "all",
                                   distance = TRUE,
                                   err_fun = error_fun)
-
-# Get test RMSE
-test_RMSE = sp_cv_bRF$error_rep$test_rmse
-test_RMSE
 
 # End time measurement
 end_time = Sys.time()

@@ -3,218 +3,280 @@
 ################################################################################
 
 ####
-## Save RMSE values in vectors
+## Save mean RMSE values in vectors
 ##
 
 # Create vectors
-MLR_RMSE_vec = c()
-bRF_RMSE_vec = c()
-RF_RMSE_vec = c() 
-RFSI_RMSE_vec = c()
-RF_MEv_RMSE_vec = c()
-OK_RF_RMSE_vec = c()
-loo_OK_RF_RMSE_vec = c()
-RF_oob_OK_RMSE_vec = c()
-UK_RMSE_vec = c()
+NuM_L_bRF = c()
+NuM_L_MLR = c() 
+NuM_L_RF = c()  
+NuM_L_RFSI = c()
+NuM_L_RF_MEv = c()  
+NuM_L_OK_RF = c() 
+NuM_L_loo_OK_RF = c()   
+NuM_L_RF_oob_OK = c()
+NuM_L_UK = c()
+WuS_SuB_bRF = c()
+WuS_SuB_MLR = c() 
+WuS_SuB_RF = c()  
+WuS_SuB_RFSI = c()
+WuS_SuB_RF_MEv = c()  
+WuS_SuB_OK_RF = c()  
+WuS_SuB_loo_OK_RF = c()  
+WuS_SuB_RF_oob_OK = c()
+WuS_SuB_UK = c() 
 
-mean_nn_dist_vec = c()
+# Vectors for the mean distance to the nearest neighbor 
+WuS_SuB_mean_nn_dist = c()
+NuM_L_mean_nn_dist = c()
 
 # Vector of the first part of the file names
-f_names_vec1 = c("WuS_SuB_sp_cv_bRF_", "WuS_SuB_sp_cv_MLR_", "WuS_SuB_sp_cv_RF_",
-                "WuS_SuB_sp_cv_RF_MEv_", "WuS_SuB_sp_cv_RFSI_", 
-                "WuS_SuB_sp_cv_loo_OK_RF_", "WuS_SuB_sp_cv_OK_RF_",
-                "WuS_SuB_sp_cv_RF_oob_OK_", "WuS_SuB_sp_cv_UK_")
+f_names_vec1 = c("NuM_L/", "WuS_SuB/")
 
 # Vector of the second part of the file names
-f_names_vec2 = c("0_+50_10.rda", "100_+50_10.rda", "400_+100_10.rda",
+f_names_vec2 = c("NuM_L_sp_cv_bRF_", "NuM_L_sp_cv_MLR_", "NuM_L_sp_cv_RF_",
+                 "NuM_L_sp_cv_RF_MEv_", "NuM_L_sp_cv_RFSI_", 
+                 "NuM_L_sp_cv_loo_OK_RF_", "NuM_L_sp_cv_OK_RF_",
+                 "NuM_L_sp_cv_RF_oob_OK_", "NuM_L_sp_cv_UK_",
+                 "WuS_SuB_sp_cv_bRF_", "WuS_SuB_sp_cv_MLR_", 
+                 "WuS_SuB_sp_cv_RF_",
+                 "WuS_SuB_sp_cv_RF_MEv_", "WuS_SuB_sp_cv_RFSI_", 
+                 "WuS_SuB_sp_cv_loo_OK_RF_", "WuS_SuB_sp_cv_OK_RF_",
+                 "WuS_SuB_sp_cv_RF_oob_OK_", "WuS_SuB_sp_cv_UK_")
+
+# Vector of the third part of the file names
+f_names_vec3 = c("0_+50_10.rda", "100_+50_10.rda", "400_+100_10.rda",
                  "900_+100_10.rda", "1600_+100_10.rda", "3600_+100_10.rda", 
                  "6400_+100_10.rda", "10000_+100_10.rda", "16900_+100_10.rda",
-                 "25600_+100_10.rda", "40000_+100_10.rda")
+                 "25600_+100_10.rda", "40000_+100_10.rda") 
 
 # Load results and store the RMSE values in the vectors
 for (i1 in f_names_vec1){
   for (i2 in f_names_vec2){
-    # Complete file name
-    f_name = paste("Results/Wus_SuB/",i1, i2, sep = "")
-    # Load file
-    load(f_name)
-    ## Get RMSE values and mean nearest neighbor distance
-    if (i1 == "WuS_SuB_sp_cv_bRF_"){
-      # RMSE
-      RMSE = sp_cv_bRF$error_rep$test_rmse
-      bRF_RMSE_vec = append(bRF_RMSE_vec, RMSE)
-      # nn distance
-      nn_distances = c()
-      for (i3 in 1:length(sp_cv_bRF$error_fold[[1]])){
-        nn_dist = sp_cv_bRF$error_fold[[1]][[i3]]$distance
-        nn_distances = append(nn_distances, nn_dist)
+    for (i3 in f_names_vec3){
+      # Complete file name
+      f_name = paste("Results/orgNitrate/",i1, i2, i3, sep = "")
+      # Load file
+      area_c1 = substr(i1, 1, 3)
+      area_c2 = substr(i2, 1, 3)
+      if (area_c1 == area_c2){
+        load(f_name)
+        ## Get mean RMSE value and mean nearest neighbor distance
+        ## NuM_L_sp_cv_bRF
+        if (i2 == "NuM_L_sp_cv_bRF_"){
+          # RMSE
+          err = summary(sp_cv_bRF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_bRF = append(NuM_L_bRF, mRMSE)
+          # nn distance
+          nn_distances = c()
+          for (i4 in 1:length(sp_cv_bRF$error_fold[[1]])){
+            nn_dist = sp_cv_bRF$error_fold[[1]][[i4]]$distance
+            nn_distances = append(nn_distances, nn_dist)
+          }
+          NuM_L_mean_nn_dist = append(NuM_L_mean_nn_dist, mean(nn_distances))
+        ## NuM_L_sp_cv_MLR
+        } else if (i2 == "NuM_L_sp_cv_MLR_"){
+          err = summary(sp_cv_MLR$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_MLR = append(NuM_L_MLR, mRMSE)
+        ## NuM_L_sp_cv_RF
+        } else if (i2 == "NuM_L_sp_cv_RF_"){
+          err = summary(sp_cv_RF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_RF = append(NuM_L_RF, mRMSE)
+        ## NuM_L_sp_cv_RFSI
+        } else if (i2 == "NuM_L_sp_cv_RFSI_"){
+          err = summary(sp_cv_RFSI$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_RFSI = append(NuM_L_RFSI, mRMSE)
+        ## NuM_L_sp_cv_RF_MEv
+        } else if (i2 == "NuM_L_sp_cv_RF_MEv_"){
+          err = summary(sp_cv_RF_MEv$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_RF_MEv = append(NuM_L_RF_MEv, mRMSE)
+        ## NuM_L_sp_cv_OK_RF
+        } else if (i2 == "NuM_L_sp_cv_OK_RF_"){
+          err = summary(sp_cv_OK_RF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_OK_RF = append(NuM_L_OK_RF, mRMSE)
+        ## NuM_L_sp_cv_loo_OK_RF
+        } else if (i2 == "NuM_L_sp_cv_loo_OK_RF_"){
+          err = summary(sp_cv_loo_OK_RF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_loo_OK_RF = append(NuM_L_loo_OK_RF, mRMSE)
+        ## NuM_L_sp_cv_RF_oob_OK
+        } else if (i2 == "NuM_L_sp_cv_RF_oob_OK_"){
+          err = summary(sp_cv_RF_oob_OK$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_RF_oob_OK = append(NuM_L_RF_oob_OK, mRMSE)
+        ## NuM_L_sp_cv_UK
+        } else if (i2 == "NuM_L_sp_cv_UK_"){
+          err = summary(sp_cv_UK$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          NuM_L_UK = append(NuM_L_UK, mRMSE)
+         ## WuS_SuB_sp_cv_bRF
+        } else if (i2 == "WuS_SuB_sp_cv_bRF_"){
+          # RMSE
+          err = summary(sp_cv_bRF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_bRF = append(WuS_SuB_bRF, mRMSE)
+          # nn distance
+          nn_distances = c()
+          for (i4 in 1:length(sp_cv_bRF$error_fold[[1]])){
+            nn_dist = sp_cv_bRF$error_fold[[1]][[i4]]$distance
+            nn_distances = append(nn_distances, nn_dist)
+          }
+          WuS_SuB_mean_nn_dist = append(WuS_SuB_mean_nn_dist, mean(nn_distances))
+          ## WuS_SuB_sp_cv_MLR
+        } else if (i2 == "WuS_SuB_sp_cv_MLR_"){
+          err = summary(sp_cv_MLR$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_MLR = append(WuS_SuB_MLR, mRMSE)
+          ## WuS_SuB_sp_cv_RF
+        } else if (i2 == "WuS_SuB_sp_cv_RF_"){
+          err = summary(sp_cv_RF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_RF = append(WuS_SuB_RF, mRMSE)
+          ## WuS_SuB_sp_cv_RFSI
+        } else if (i2 == "WuS_SuB_sp_cv_RFSI_"){
+          err = summary(sp_cv_RFSI$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_RFSI = append(WuS_SuB_RFSI, mRMSE)
+          ## WuS_SuB_sp_cv_RF_MEv
+        } else if (i2 == "WuS_SuB_sp_cv_RF_MEv_"){
+          err = summary(sp_cv_RF_MEv$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_RF_MEv = append(WuS_SuB_RF_MEv, mRMSE)
+          ## WuS_SuB_sp_cv_OK_RF
+        } else if (i2 == "WuS_SuB_sp_cv_OK_RF_"){
+          err = summary(sp_cv_OK_RF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_OK_RF = append(WuS_SuB_OK_RF, mRMSE)
+          ## WuS_SuB_sp_cv_loo_OK_RF
+        } else if (i2 == "WuS_SuB_sp_cv_loo_OK_RF_"){
+          err = summary(sp_cv_loo_OK_RF$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_loo_OK_RF = append(WuS_SuB_loo_OK_RF, mRMSE)
+          ## WuS_SuB_sp_cv_RF_oob_OK
+        } else if (i2 == "WuS_SuB_sp_cv_RF_oob_OK_"){
+          err = summary(sp_cv_RF_oob_OK$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_RF_oob_OK = append(WuS_SuB_RF_oob_OK, mRMSE)
+          ## WuS_SuB_sp_cv_UK
+        } else if (i2 == "WuS_SuB_sp_cv_UK_"){
+          err = summary(sp_cv_UK$error_fold)
+          mRMSE = err["test.rmse", "mean"]
+          WuS_SuB_UK = append(WuS_SuB_UK, mRMSE)
+        }
+        
       }
-      mean_nn_dist_vec = append(mean_nn_dist_vec, mean(nn_distances))
-      
-    } else if (i1 == "WuS_SuB_sp_cv_MLR_"){
-      RMSE = sp_cv_MLR$error_rep$test_rmse
-      MLR_RMSE_vec = append(MLR_RMSE_vec, RMSE)
-      
-    } else if (i1 == "WuS_SuB_sp_cv_RF_"){
-      RMSE = sp_cv_RF$error_rep$test_rmse
-      RF_RMSE_vec = append(RF_RMSE_vec, RMSE)
-      
-    } else if (i1 == "WuS_SuB_sp_cv_RF_MEv_"){
-      RMSE = sp_cv_RF_MEv$error_rep$test_rmse
-      RF_MEv_RMSE_vec = append(RF_MEv_RMSE_vec, RMSE)
-      
-    } else if (i1 == "WuS_SuB_sp_cv_RFSI_"){
-      RMSE = sp_cv_RFSI$error_rep$test_rmse
-      RFSI_RMSE_vec = append(RFSI_RMSE_vec, RMSE)
-      
-    } else if (i1 == "WuS_SuB_sp_cv_OK_RF_"){
-      RMSE = sp_cv_OK_RF$error_rep$test_rmse
-      OK_RF_RMSE_vec = append(OK_RF_RMSE_vec, RMSE)
-      
-    } else if (i1 == "WuS_SuB_sp_cv_loo_OK_RF_"){
-      RMSE = sp_cv_llo_OK_RF$error_rep$test_rmse
-      loo_OK_RF_RMSE_vec = append(loo_OK_RF_RMSE_vec, RMSE)
-      
-    } else if (i1 == "WuS_SuB_sp_cv_RF_oob_OK_"){
-      RMSE = sp_cv_RF_oob_OK$error_rep$test_rmse
-      RF_oob_OK_RMSE_vec = append(RF_oob_OK_RMSE_vec, RMSE)
-      
-    } else{
-      RMSE = sp_cv_UK$error_rep$test_rmse
-      UK_RMSE_vec = append(UK_RMSE_vec, RMSE)
     }
   }
 }
-
-# Scale the nn dist vec 
-mean_nn_sqrt_dist_vec = sqrt(mean_nn_dist_vec)
+        
+# Scale the nn dist vecs 
+NuM_L_mean_sqrt_nn_dist = sqrt(NuM_L_mean_nn_dist)
+WuS_SuB_mean_sqrt_nn_dist = sqrt(WuS_SuB_mean_nn_dist)        
 ##
-## End (save RMSE values in vectors)
+## End (save mean RMSE values in vectors)
 ####
 
 
 ####
 ## Plot SPEP
 ##
-par(mfrow = c(1,1))
+
+# Create dfs
+NuM_L_mRMSE_df = data.frame(NuM_L_UK, NuM_L_RF_oob_OK, NuM_L_loo_OK_RF, 
+                            NuM_L_RF_MEv, NuM_L_RFSI, NuM_L_RF, NuM_L_bRF,
+                            NuM_L_MLR, NuM_L_OK_RF)
+
+WuS_SuB_mRMSE_df = data.frame(WuS_SuB_UK, WuS_SuB_RF_oob_OK, WuS_SuB_loo_OK_RF, 
+                            WuS_SuB_RF_MEv, WuS_SuB_RFSI, WuS_SuB_RF, WuS_SuB_bRF,
+                            WuS_SuB_MLR, WuS_SuB_OK_RF)
+
+# Create color vector 
+col_vec = c("#666666", "#9900FF", "#0000FF", "#FF0000", "#FF9933", "#33CC33",
+            "#CCCCCC", "#000000", "#66FFFF")
+
+
+## NuM_L
 # Margins
-par(mar = c(4.1,3.9,0.1,0.1)) # bottom, left, top, right
+#par(mar = c(4.1,3.9,0.1,0.1)) # bottom, left, top, right
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "Vorhersagedistanz [m]", 
-     ylab = "RMSE",
-     xlim = c(7, 200),
+     ylab = "Mittlerer RMSE",
+     xlim = c(7, 194),
      xaxt = "n",
-     ylim = c(1.2, 2.6),
-     yaxt = "n",
+     ylim = c(0, 40),
+     #yaxt = "n",
      main = "",
      type = "n")
-axis(1, at = c(0, 5, 11.18, 21.21, 30.82, 40, 60, 80, 100, 130, 160, 200), 
-     labels = c(0, 25, 125, 450, 950, 1600, 3600, 6400, 10000, 16900, 25600, 40000),
-     cex.axis = 0.75)
-axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+axis(1, at = c(0, 2.236068, 10.95445, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 5, 120, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
 
-# MLR RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = MLR_RMSE_vec,
-       pch = 16,
-       col = ("#000000"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = MLR_RMSE_vec,
-      col = ("#000000"),
-      lty = 2, lwd = 2)
-
-# UK_RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = UK_RMSE_vec,
-       pch = 21,
-       bg = ("#666666"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = UK_RMSE_vec,
-      col = ("#666666"),
-      lty = 2, lwd = 2)
-
-# bRF RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = bRF_RMSE_vec,
-       pch = 21,
-       bg = ("#CCCCCC"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = bRF_RMSE_vec,
-      col = ("#CCCCCC"),
-      lty = 2, lwd = 2)
-
-# RF RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = RF_RMSE_vec,
-       pch = 21,
-       bg = ("#33CC33"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = RF_RMSE_vec,
-      col = ("#33CC33"),
-      lty = 2, lwd = 2)
-
-# RFMEv RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = RF_MEv_RMSE_vec,
-       pch = 21,
-       bg = ("#FF0000"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = RF_MEv_RMSE_vec,
-      col = ("#FF0000"),
-      lty = 2, lwd = 2)
-
-# RF_oob_OK RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = RF_oob_OK_RMSE_vec,
-       pch = 21,
-       bg = ("#9900FF"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = RF_oob_OK_RMSE_vec,
-      col = ("#9900FF"),
-      lty = 2, lwd = 2)
-
-# OK_RF RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = OK_RF_RMSE_vec,
-       pch = 21,
-       bg = ("#66FFFF"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = OK_RF_RMSE_vec,
-      col = ("#66FFFF"),
-      lty = 2, lwd = 2)
-
-# loo_OK_RF RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = loo_OK_RF_RMSE_vec,
-       pch = 21,
-       bg = ("#0000FF"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = loo_OK_RF_RMSE_vec,
-      col = ("#0000FF"),
-      lty = 2, lwd = 2)
-
-# RFSI RMSE values
-points(x = mean_nn_sqrt_dist_vec,
-       y = RFSI_RMSE_vec,
-       pch = 21,
-       bg = ("#FF9933"))
-
-lines(x = mean_nn_sqrt_dist_vec,
-      y = RFSI_RMSE_vec,
-      col = ("#FF9933"),
-      lty = 2, lwd = 2)
+# Plot mRMSE values
+for (i in 1:ncol(NuM_L_mRMSE_df)){
+  # Points
+  points(x = NuM_L_mean_sqrt_nn_dist,
+         y = NuM_L_mRMSE_df[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = NuM_L_mean_sqrt_nn_dist,
+        y = NuM_L_mRMSE_df[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
 
 # Legend
-legend(x = "bottomright", cex = 0.9,
+legend(x = "bottomright", cex = 1, ncol = 2,
+       legend = c("MLR", "UK", "RF", "RF-K", "RF-MEv", "RF-oob-OK", "OK-RF", 
+                  "RF-loo-OK", "RFSI"),
+       fill = c("#000000", "#666666", "#CCCCCC", "#33CC33", "#FF0000", "#9900FF",
+                "#66FFFF", "#0000FF", "#FF9933"))
+
+
+## WuS_SuB
+# Margins
+#par(mar = c(4.1,3.9,0.1,0.1)) # bottom, left, top, right
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "Vorhersagedistanz [m]", 
+     ylab = "Mittlerer RMSE",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 12),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
+               100.19980, 130.15376, 160.12495, 200.09998), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
+                40040))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(WuS_SuB_mRMSE_df)){
+  # Points
+  points(x = WuS_SuB_mean_sqrt_nn_dist,
+         y = WuS_SuB_mRMSE_df[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = WuS_SuB_mean_sqrt_nn_dist,
+        y = WuS_SuB_mRMSE_df[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+# Legend
+legend(x = "bottomright", cex = 1, ncol = 2,
        legend = c("MLR", "UK", "RF", "RF-K", "RF-MEv", "RF-oob-OK", "OK-RF", 
                   "RF-loo-OK", "RFSI"),
        fill = c("#000000", "#666666", "#CCCCCC", "#33CC33", "#FF0000", "#9900FF",
@@ -226,91 +288,6 @@ legend(x = "bottomright", cex = 0.9,
 ################################################################################
 ## End (SPEP)
 ################################################################################
-
-
-################################################################################
-## Variable importance plots (VIPs)
-################################################################################
-# Vector of the first part of the file names
-f_names_vec1 = c("WuS_SuB_sp_cv_bRF_", "WuS_SuB_sp_cv_MLR_", "WuS_SuB_sp_cv_RF_",
-                 "WuS_SuB_sp_cv_RF_MEv_", "WuS_SuB_sp_cv_RFSI_", 
-                 "WuS_SuB_sp_cv_loo_OK_RF_", "WuS_SuB_sp_cv_OK_RF_",
-                 "WuS_SuB_sp_cv_RF_oob_OK_", "WuS_SuB_sp_cv_UK_")
-
-# Second part of the file name
-f_names_p2 = "0_+all_10.rda" 
-
-# Load files
-for (i in f_names_vec1){
-  load(paste("Results/WuS_SuB/", i, f_names_p2, sep = ""))
-}
-
-# Get importance
-imp_MLR = summary(sp_cv_MLR$importance)
-imp_UK = summary(sp_cv_UK$importance)
-imp_bRF = summary(sp_cv_bRF$importance)
-imp_RF = summary(sp_cv_RF$importance)
-imp_RFSI = summary(sp_cv_RFSI$importance)
-imp_RF_MEv = summary(sp_cv_RF_MEv$importance)
-imp_OK_RF = summary(sp_cv_OK_RF$importance)
-imp_loo_OK_RF = summary(sp_cv_llo_OK_RF$importance)
-imp_RF_oob_OK = summary(sp_cv_RF_oob_OK$importance)
-
-# Convert decrease to increase
-imp_MLR$mean.rmse = imp_MLR$mean.rmse * -1
-imp_UK$mean.rmse = imp_UK$mean.rmse * -1
-imp_bRF$mean.rmse = imp_bRF$mean.rmse * -1
-imp_RF$mean.rmse = imp_RF$mean.rmse * -1
-imp_RFSI$mean.rmse = imp_RFSI$mean.rmse * -1
-imp_RF_MEv$mean.rmse = imp_RF_MEv$mean.rmse * -1
-imp_OK_RF$mean.rmse = imp_OK_RF$mean.rmse * -1
-imp_loo_OK_RF$mean.rmse = imp_loo_OK_RF$mean.rmse * -1
-imp_RF_oob_OK$mean.rmse = imp_RF_oob_OK$mean.rmse * -1
-
-# Barplots
-par(mfrow=c(3,3))
-
-imp_MLR = imp_MLR[order(imp_MLR$mean.rmse, decreasing = FALSE),]
-par(mar = c(4,9,1,0.7)) # bottom, left, top, right margins
-barplot(imp_MLR$mean.rmse[19:23], names.arg = rownames(imp_MLR)[19:23], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "MLR")
-
-imp_UK = imp_UK[order(imp_UK$mean.rmse, decreasing = FALSE),]
-barplot(imp_UK$mean.rmse[19:23], names.arg = rownames(imp_UK)[19:23], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "UK")
-
-imp_bRF = imp_bRF[order(imp_bRF$mean.rmse, decreasing = FALSE),]
-barplot(imp_bRF$mean.rmse[17:21], names.arg = rownames(imp_bRF)[17:21], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF")
-
-imp_RF = imp_RF[order(imp_RF$mean.rmse, decreasing = FALSE),]
-barplot(imp_RF$mean.rmse[21:25], names.arg = rownames(imp_RF)[21:25], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF-K")
-
-imp_RFSI = imp_RFSI[order(imp_RFSI$mean.rmse, decreasing = FALSE),]
-barplot(imp_RFSI$mean.rmse[21:25], names.arg = rownames(imp_RFSI)[21:25], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RFSI")
-
-imp_RF_MEv = imp_RF_MEv[order(imp_RF_MEv$mean.rmse, decreasing = FALSE),]
-barplot(imp_RF_MEv$mean.rmse[21:25], names.arg = rownames(imp_RF_MEv)[21:25], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF-MEv")
-
-imp_OK_RF = imp_OK_RF[order(imp_OK_RF$mean.rmse, decreasing = FALSE),]
-par(mar = c(4.1,9,0.7,0.7)) # bottom, left, top, right margins
-barplot(imp_OK_RF$mean.rmse[21:25], names.arg = rownames(imp_OK_RF)[21:25], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "OK-RF", xlab = "Mittlere Zunahme des RMSE")
-
-imp_loo_OK_RF = imp_loo_OK_RF[order(imp_loo_OK_RF$mean.rmse, decreasing = FALSE),]
-barplot(imp_loo_OK_RF$mean.rmse[21:25], names.arg = rownames(imp_loo_OK_RF)[21:25], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "loo-OK-RF", xlab = "Mittlere Zunahme des RMSE")
-
-imp_RF_oob_OK = imp_RF_oob_OK[order(imp_RF_oob_OK$mean.rmse, decreasing = FALSE),]
-barplot(imp_RF_oob_OK$mean.rmse[21:25], names.arg = rownames(imp_RF_oob_OK)[21:25], 
-        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF-oob-OK", xlab = "Mittlere Zunahme des RMSE")
-################################################################################
-## End (VIPs)
-################################################################################
-
 
 
 ################################################################################
@@ -683,4 +660,112 @@ for (i2 in 1:ncol(tc315_df)){
 ####
 ################################################################################
 ## End (SVIPs) 
+################################################################################
+
+
+################################################################################
+## Test area
+################################################################################
+load("Results/orgNitrate/NuM_L/NuM_L_sp_cv_bRF_100_+50_10.rda")
+
+error_vec = c()
+
+for (i in 1:length(sp_cv_bRF$represampling[[1]])){
+  error_vec = append(error_vec, sp_cv_bRF$error_fold[[1]][[i]]$test$rmse)
+  median_vec = append(median_vec, sp_cv_bRF$error_fold[[1]][[i]]$test$median)
+}
+
+err <- summary(sp_cv_bRF$error_fold)
+rmse = err["test.rmse", "mean"]
+
+error_vec
+median_vec
+
+mean(error_vec)
+################################################################################
+## End (test area)
+################################################################################
+
+
+################################################################################
+## Variable importance plots (VIPs)
+################################################################################
+# Vector of the first part of the file names
+f_names_vec1 = c("WuS_SuB_sp_cv_bRF_", "WuS_SuB_sp_cv_MLR_", "WuS_SuB_sp_cv_RF_",
+                 "WuS_SuB_sp_cv_RF_MEv_", "WuS_SuB_sp_cv_RFSI_", 
+                 "WuS_SuB_sp_cv_loo_OK_RF_", "WuS_SuB_sp_cv_OK_RF_",
+                 "WuS_SuB_sp_cv_RF_oob_OK_", "WuS_SuB_sp_cv_UK_")
+
+# Second part of the file name
+f_names_p2 = "0_+all_10.rda" 
+
+# Load files
+for (i in f_names_vec1){
+  load(paste("Results/WuS_SuB/", i, f_names_p2, sep = ""))
+}
+
+# Get importance
+imp_MLR = summary(sp_cv_MLR$importance)
+imp_UK = summary(sp_cv_UK$importance)
+imp_bRF = summary(sp_cv_bRF$importance)
+imp_RF = summary(sp_cv_RF$importance)
+imp_RFSI = summary(sp_cv_RFSI$importance)
+imp_RF_MEv = summary(sp_cv_RF_MEv$importance)
+imp_OK_RF = summary(sp_cv_OK_RF$importance)
+imp_loo_OK_RF = summary(sp_cv_llo_OK_RF$importance)
+imp_RF_oob_OK = summary(sp_cv_RF_oob_OK$importance)
+
+# Convert decrease to increase
+imp_MLR$mean.rmse = imp_MLR$mean.rmse * -1
+imp_UK$mean.rmse = imp_UK$mean.rmse * -1
+imp_bRF$mean.rmse = imp_bRF$mean.rmse * -1
+imp_RF$mean.rmse = imp_RF$mean.rmse * -1
+imp_RFSI$mean.rmse = imp_RFSI$mean.rmse * -1
+imp_RF_MEv$mean.rmse = imp_RF_MEv$mean.rmse * -1
+imp_OK_RF$mean.rmse = imp_OK_RF$mean.rmse * -1
+imp_loo_OK_RF$mean.rmse = imp_loo_OK_RF$mean.rmse * -1
+imp_RF_oob_OK$mean.rmse = imp_RF_oob_OK$mean.rmse * -1
+
+# Barplots
+par(mfrow=c(3,3))
+
+imp_MLR = imp_MLR[order(imp_MLR$mean.rmse, decreasing = FALSE),]
+par(mar = c(4,9,1,0.7)) # bottom, left, top, right margins
+barplot(imp_MLR$mean.rmse[19:23], names.arg = rownames(imp_MLR)[19:23], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "MLR")
+
+imp_UK = imp_UK[order(imp_UK$mean.rmse, decreasing = FALSE),]
+barplot(imp_UK$mean.rmse[19:23], names.arg = rownames(imp_UK)[19:23], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "UK")
+
+imp_bRF = imp_bRF[order(imp_bRF$mean.rmse, decreasing = FALSE),]
+barplot(imp_bRF$mean.rmse[17:21], names.arg = rownames(imp_bRF)[17:21], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF")
+
+imp_RF = imp_RF[order(imp_RF$mean.rmse, decreasing = FALSE),]
+barplot(imp_RF$mean.rmse[21:25], names.arg = rownames(imp_RF)[21:25], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF-K")
+
+imp_RFSI = imp_RFSI[order(imp_RFSI$mean.rmse, decreasing = FALSE),]
+barplot(imp_RFSI$mean.rmse[21:25], names.arg = rownames(imp_RFSI)[21:25], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RFSI")
+
+imp_RF_MEv = imp_RF_MEv[order(imp_RF_MEv$mean.rmse, decreasing = FALSE),]
+barplot(imp_RF_MEv$mean.rmse[21:25], names.arg = rownames(imp_RF_MEv)[21:25], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF-MEv")
+
+imp_OK_RF = imp_OK_RF[order(imp_OK_RF$mean.rmse, decreasing = FALSE),]
+par(mar = c(4.1,9,0.7,0.7)) # bottom, left, top, right margins
+barplot(imp_OK_RF$mean.rmse[21:25], names.arg = rownames(imp_OK_RF)[21:25], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "OK-RF", xlab = "Mittlere Zunahme des RMSE")
+
+imp_loo_OK_RF = imp_loo_OK_RF[order(imp_loo_OK_RF$mean.rmse, decreasing = FALSE),]
+barplot(imp_loo_OK_RF$mean.rmse[21:25], names.arg = rownames(imp_loo_OK_RF)[21:25], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "loo-OK-RF", xlab = "Mittlere Zunahme des RMSE")
+
+imp_RF_oob_OK = imp_RF_oob_OK[order(imp_RF_oob_OK$mean.rmse, decreasing = FALSE),]
+barplot(imp_RF_oob_OK$mean.rmse[21:25], names.arg = rownames(imp_RF_oob_OK)[21:25], 
+        horiz = TRUE, las = 1, xlim = c(0, 0.7), main = "RF-oob-OK", xlab = "Mittlere Zunahme des RMSE")
+################################################################################
+## End (VIPs)
 ################################################################################

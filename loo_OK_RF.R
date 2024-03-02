@@ -233,10 +233,6 @@ sp_cv_loo_OK_RF = sperrorest::sperrorest(formula = fo, data = d,
                                          distance = TRUE,
                                          err_fun = error_fun)
 
-# Get test RMSE
-test_RMSE = sp_cv_loo_OK_RF$error_rep$test_rmse
-test_RMSE
-
 # End time measurement
 end_time = Sys.time()
 bygone_time = end_time - start_time

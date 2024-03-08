@@ -15,16 +15,16 @@ p_load("automap")
 source("auxiliary_functions.R", encoding = "UTF-8")
 
 # Fewer decimal places, apply penalty on exponential notation 
-options("scipen"= 999, "digits"=4)
+options("scipen"= 999, "digits" = 4)
 
 # Load data and formula
-data_set = "NuM_L"
-load("Data/NuM_L.rda")
-d = NuM_L
-fo_RF = fo_RF_NuM_L
+data_set = "WuS_SuB"
+load("Data/WuS_SuB.rda")
+d = WuS_SuB
+fo_RF = fo_RF_WuS_SuB_bc
 
 # Set buffer 
-buffer = 0
+buffer = 100
 
 # Set tolerance (all = partition_loo without buffer)
 tolerance = 50
@@ -63,7 +63,7 @@ if (tolerance == "all"){
 #wd = 8841 # NuM_L_bc  
 
 #wd = 26976 # WuS_SuB
-#wd = 13504 # WuS_SuB_bc
+wd = 13504 # WuS_SuB_bc
 
 # OK formula
 OK_fo = as.formula(bcNitrate ~ 1)

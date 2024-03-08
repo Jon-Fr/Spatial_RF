@@ -13,10 +13,10 @@ source("auxiliary_functions.R", encoding = "UTF-8")
 options("scipen"= 999, "digits"=4)
 
 # Load data and formula
-data_set = "WuS_SuB"
-load("Data/WuS_SuB.rda")
-d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB_bc
+data_set = "NuM_L"
+load("Data/NuM_L.rda")
+d = NuM_L
+fo_RF = fo_RF_NuM_L_bc
 
 # Set buffer 
 buffer = 0

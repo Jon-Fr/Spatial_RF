@@ -19,10 +19,10 @@ d = NuM_L
 fo_lm = fo_lm_NuM_L_bc
 
 # Set buffer 
-buffer = 0
+buffer = 40000
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = 50
+tolerance = 100
 
 # Set number of permutations 
 n_perm = 0
@@ -42,7 +42,7 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
                   agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
                   lbm_class_Gruenland + lbm_class_Unbewachsen + 
                   lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
+                  aea20_2 + aea20_8 + aea20_12)
 
 # Calculate importance for these variables
 imp_vars_lm = all.vars(fo_lm)[-1]

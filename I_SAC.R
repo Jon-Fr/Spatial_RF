@@ -27,7 +27,7 @@ fo_lm_WuS_SuB = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10care
 #N = NuM_L
 #W = WuS_SuB
 
-## Get information about the prediction distance an plot histograms
+## Get information about the prediction distance and plot histograms
 pd_df_N = info_d_NuM_L$predDist_df
 # Part of the Area below range value of variogram model
 br_vec_N = pd_df_N[pd_df_N$lyr.1 <3928, ]
@@ -78,9 +78,9 @@ par(mar = c(2, 0, 2, 0)) # bottom, left, top, right margins
 plot(hist_N, xlab = "", ylab = "", 
      main = "", col = color_N, xaxt = "n", yaxt = "n", xlim = c(0, 175000))
 axis(1, at = c(0, 25000, 50000, 75000, 100000, 125000, 150000, 175000),
-     labels = c("", "", "", "", "", "", "", ""), cex.asis = 1.2)#, lwd.ticks = 0)
+     labels = c("", "", "", "", "", "", "", ""), cex.axis = 1.2)#, lwd.ticks = 0)
 axis(2, at = c(0, 500000, 1000000, 1500000, 2000000, 2500000), 
-     labels = c(0, 500, 100, 150, 200, 250), cex.asis = 1.2)
+     labels = c(0, 500, 100, 150, 200, 250), cex.axis = 1.2)
 legend(x = "topright" , legend = c("a)"), bty = "n", cex = 1.25)
 legend(x = "top", cex = 1.25,
        legend = c("1. Quartil", "2. Quartil", "3. Quartil", "4. Quartil"),

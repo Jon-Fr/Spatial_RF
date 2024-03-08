@@ -19,10 +19,10 @@ d = WuS_SuB
 fo_RF = fo_RF_WuS_SuB_bc
 
 # Set buffer 
-buffer = 0
+buffer = 40000
 
 # Set tolerance (all = partition_loo without buffer)
-tolerance = 50
+tolerance = 100
 
 # Set number of permutations 
 n_perm = 0

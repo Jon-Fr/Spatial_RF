@@ -36,18 +36,18 @@ for (i in 1:length(sp_cv_MLR$error_fold[[1]])){
 median(nn_distances)
 
 
+
+
 # Load result
-file_name = "WuS_SuB_sp_cv_UK_100_+50_10.rda"
-load(paste("Results/bcNitrate/WuS_SuB/",file_name, sep = ""))
+file_name = "NuM_L_sp_cv_loo_OK_RF_6400_+100_10.rda"
+load(paste("Results/",file_name, sep = ""))
 
 bygone_time
-RMSE = sp_cv_UK$error_rep$test_rmse
+RMSE = sp_cv_loo_OK_RF$error_rep$test_rmse
 RMSE
 
-
-
 # Determine most imporatne variables
-imp <- summary(sp_cv_UK$importance)
+imp <- summary(sp_cv_loo_OK_RF$importance)
 
 sorted_df <- imp[order(imp$mean.rmse),]
 

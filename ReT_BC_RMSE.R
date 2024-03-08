@@ -13,14 +13,14 @@ f_names_vec1 = c("NuM_L/", "WuS_SuB/")
 
 # Vector of the second part of the file names
 f_names_vec2 = c("NuM_L_sp_cv_bRF_", "NuM_L_sp_cv_MLR_", "NuM_L_sp_cv_RF_",
-                 "NuM_L_sp_cv_RF_MEv_", "SuB_NuM_L_sp_cv_RFSI_", 
-                 "NuM_L_sp_cv_loo_OK_RF_", "SuB_NuM_L_sp_cv_OK_RF_",
-                 "NuM_L_sp_cv_RF_oob_OK_", "SuB_NuM_L_sp_cv_UK_",
+                 "NuM_L_sp_cv_RF_MEv_", "NuM_L_sp_cv_RFSI_", 
+                 "NuM_L_sp_cv_loo_OK_RF_", "NuM_L_sp_cv_OK_RF_",
+                 "NuM_L_sp_cv_RF_oob_OK_", "NuM_L_sp_cv_UK_",
                  "WuS_SuB_sp_cv_bRF_", "WuS_SuB_sp_cv_MLR_", 
                  "WuS_SuB_sp_cv_RF_",
-                 "WuS_SuB_sp_cv_RF_MEv_", "SuB_WuS_SuB_sp_cv_RFSI_", 
-                 "WuS_SuB_sp_cv_loo_OK_RF_", "SuB_WuS_SuB_sp_cv_OK_RF_",
-                 "WuS_SuB_sp_cv_RF_oob_OK_", "SuB_WuS_SuB_sp_cv_UK_")
+                 "WuS_SuB_sp_cv_RF_MEv_", "WuS_SuB_sp_cv_RFSI_", 
+                 "WuS_SuB_sp_cv_loo_OK_RF_", "WuS_SuB_sp_cv_OK_RF_",
+                 "WuS_SuB_sp_cv_RF_oob_OK_", "WuS_SuB_sp_cv_UK_")
 
 # Vector of the third part of the file names
 f_names_vec3 = c("0_+50_0.rda", "100_+50_0.rda", "400_+100_0.rda",
@@ -314,35 +314,319 @@ WuS_SuB_mean_sqrt_nn_dist = sqrt(WuS_SuB_mean_nn_dist)
 
 
 ################################################################################
-## Plot results
+## Plot SPEPs
 ################################################################################
-####
+# Load original scale dfs for comparison 
+load("Results/bcNitrateRe/mRMSE_dfs_org.rda")
+
+# Create dfs
+NuM_L_mRMSE_df_re = data.frame(NuM_L_UK_mRv, NuM_L_RF_oob_OK_mRv, 
+                            NuM_L_loo_OK_RF_mRv, 
+                            NuM_L_RF_MEv_mRv, NuM_L_RFSI_mRv, NuM_L_RF_mRv, 
+                            NuM_L_bRF_mRv,
+                            NuM_L_MLR_mRv, NuM_L_OK_RF_mRv)
+
+WuS_SuB_mRMSE_df_re = data.frame(WuS_SuB_UK_mRv, WuS_SuB_RF_oob_OK_mRv, 
+                              WuS_SuB_loo_OK_RF_mRv, 
+                              WuS_SuB_RF_MEv_mRv, WuS_SuB_RFSI_mRv, 
+                              WuS_SuB_RF_mRv, WuS_SuB_bRF_mRv,
+                              WuS_SuB_MLR_mRv, WuS_SuB_OK_RF_mRv)
+
+# Calculate difference df
+NuM_L_mRMSE_df_diff = NuM_L_mRMSE_df_re - NuM_L_mRMSE_df
+WuS_SuB_mRMSE_df_diff = WuS_SuB_mRMSE_df_re - WuS_SuB_mRMSE_df
+
+# Percentage change df
+NuM_L_mRMSE_df_pc = (NuM_L_mRMSE_df_diff / NuM_L_mRMSE_df) * 100
+WuS_SuB_mRMSE_df_pc = (WuS_SuB_mRMSE_df_diff / WuS_SuB_mRMSE_df) * 100
+
+
+# Create color vector 
+col_vec = c("#666666", "#9900FF", "#0000FF", "#FF0000", "#FF9933", "#33CC33",
+            "#CCCCCC", "#000000", "#66FFFF")
+
+## Set plot layout
+layout_mat <- matrix(c(1,2,1,3), nrow = 2, ncol = 2,
+                     byrow = TRUE)
+layout_mat
+
+my_lay = layout(mat = layout_mat, 
+                heights = c(2.5, 2.5),
+                widths = c(0.5, 4.5), respect =FALSE)
+layout.show(my_lay)
+
+# First plot
+par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
+plot(NULL, ylab = "", bty = "n", 
+     xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
+mtext(expression("Prozentual Veränderung des mittleren RMSE"),
+      side = 4, line = -4, col = 1, cex = 1.1)
+
 ## NuM_L
-##
+# Margins
+par(mar = c(3, 0, 1, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "", 
+     ylab = "",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(-45, 45),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 2.236068, 10.95445, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 5, 120, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
 
+# Plot mRMSE values
+for (i in 1:ncol(NuM_L_mRMSE_df_pc)){
+  # Points
+  points(x = NuM_L_mean_sqrt_nn_dist,
+         y = NuM_L_mRMSE_df_pc[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = NuM_L_mean_sqrt_nn_dist,
+        y = NuM_L_mRMSE_df_pc[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
 
-##
-## End (NuM_L)
-####
+legend(x = "bottomleft" , legend = c("a)"), bty = "n", cex = 1.25)
 
-
-####
 ## WuS_SuB
-##
+# Margins
+par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "Vorhersagedistanz [m]", 
+     #ylab = "Mittlerer RMSE",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(-10, 10),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
+               100.19980, 130.15376, 160.12495, 200.09998), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
+                40040))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
 
+# Plot mRMSE values
+for (i in 1:ncol(WuS_SuB_mRMSE_df_pc)){
+  # Points
+  points(x = WuS_SuB_mean_sqrt_nn_dist,
+         y = WuS_SuB_mRMSE_df_pc[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = WuS_SuB_mean_sqrt_nn_dist,
+        y = WuS_SuB_mRMSE_df_pc[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
 
-##
-## End (WuS_SuB)
-####
+legend(x = "bottomleft" , legend = c("b)"), bty = "n", cex = 1.25)
+
+# Legend
+legend(x = "topright", cex = 0.8, ncol = 2,
+       legend = c("MLR", "UK", "RF", "RF-K", "RF-MEv", "RF-oob-OK", "OK-RF", 
+                  "RF-loo-OK", "RFSI"),
+       fill = c("#000000", "#666666", "#CCCCCC", "#33CC33", "#FF0000", "#9900FF",
+                "#66FFFF", "#0000FF", "#FF9933"))
+
+# First plot
+par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
+plot(NULL, ylab = "", bty = "n", 
+     xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
+mtext(expression("Mittlerer RMSE"),
+      side = 4, line = -4, col = 1, cex = 1.1)
+
+## NuM_L
+# Margins
+par(mar = c(3, 0, 1, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "", 
+     ylab = "",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 40),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 2.236068, 10.95445, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 5, 120, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(NuM_L_mRMSE_df_re)){
+  # Points
+  points(x = NuM_L_mean_sqrt_nn_dist,
+         y = NuM_L_mRMSE_df_re[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = NuM_L_mean_sqrt_nn_dist,
+        y = NuM_L_mRMSE_df_re[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+legend(x = "bottomleft" , legend = c("a)"), bty = "n", cex = 1.25)
+
+## WuS_SuB
+# Margins
+par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "Vorhersagedistanz [m]", 
+     #ylab = "Mittlerer RMSE",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 13),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
+               100.19980, 130.15376, 160.12495, 200.09998), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
+                40040))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(WuS_SuB_mRMSE_df_re)){
+  # Points
+  points(x = WuS_SuB_mean_sqrt_nn_dist,
+         y = WuS_SuB_mRMSE_df_re[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = WuS_SuB_mean_sqrt_nn_dist,
+        y = WuS_SuB_mRMSE_df_re[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+# Legend
+legend(x = "bottomright", cex = 0.8, ncol = 2,
+       legend = c("MLR", "UK", "RF", "RF-K", "RF-MEv", "RF-oob-OK", "OK-RF", 
+                  "RF-loo-OK", "RFSI"),
+       fill = c("#000000", "#666666", "#CCCCCC", "#33CC33", "#FF0000", "#9900FF",
+                "#66FFFF", "#0000FF", "#FF9933"))
+
+legend(x = "bottomleft" , legend = c("b)"), bty = "n", cex = 1.25)
+
+# First plot
+par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
+plot(NULL, ylab = "", bty = "n", 
+     xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
+mtext(expression("Mittlerer RMSE"),
+      side = 4, line = -4, col = 1, cex = 1.1)
+
+## NuM_L
+# Margins
+par(mar = c(3, 0, 1, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "", 
+     ylab = "",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 40),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 2.236068, 10.95445, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 5, 120, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(NuM_L_mRMSE_df)){
+  # Points
+  points(x = NuM_L_mean_sqrt_nn_dist,
+         y = NuM_L_mRMSE_df[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = NuM_L_mean_sqrt_nn_dist,
+        y = NuM_L_mRMSE_df[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+legend(x = "bottomleft" , legend = c("a)"), bty = "n", cex = 1.25)
+
+## WuS_SuB
+# Margins
+par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "Vorhersagedistanz [m]", 
+     #ylab = "Mittlerer RMSE",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 13),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
+               100.19980, 130.15376, 160.12495, 200.09998), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
+                40040))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(WuS_SuB_mRMSE_df)){
+  # Points
+  points(x = WuS_SuB_mean_sqrt_nn_dist,
+         y = WuS_SuB_mRMSE_df[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = WuS_SuB_mean_sqrt_nn_dist,
+        y = WuS_SuB_mRMSE_df[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+# Legend
+legend(x = "bottomright", cex = 1, ncol = 2,
+       legend = c("MLR", "UK", "RF", "RF-K", "RF-MEv", "RF-oob-OK", "OK-RF", 
+                  "RF-loo-OK", "RFSI"),
+       fill = c("#000000", "#666666", "#CCCCCC", "#33CC33", "#FF0000", "#9900FF",
+                "#66FFFF", "#0000FF", "#FF9933"))
+
+legend(x = "bottomleft" , legend = c("b)"), bty = "n", cex = 1.25)
 ################################################################################
-## End (plot results)
+## End (plot SPEPs)
 ################################################################################
 
 
 ################################################################################
 ## Test area
 ################################################################################
+max_bc = max(NuM_L$bcNitrate)
+min_bc = min(NuM_L$bcNitrate)
+range_bc = max_bc - min_bc
+sd_bc = sd(NuM_L$bcNitrate)
+range_to_sd_bc = (range_bc/sd_bc)
+mean_bc = mean(NuM_L$bcNitrate)
 
+max_sm = max(NuM_L$subMittelwert)
+min_sm = min(NuM_L$subMittelwert)
+range_sm = max_sm - min_sm
+sd_sm = sd(NuM_L$subMittelwert)
+range_to_sd_sm = (range_bc/sd_bc)
+mean_sm = mean(NuM_L$subMittelwert)
 ################################################################################
 ## End (test area)
 ################################################################################

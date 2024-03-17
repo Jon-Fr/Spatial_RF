@@ -1,5 +1,5 @@
 ################################################################################
-## Preparation (strictly necessary)
+## Preparation
 ################################################################################
 # Load necessary packages
 library("pacman")
@@ -7,13 +7,12 @@ p_load("sp")
 p_load("sf")
 p_load("ranger")
 p_load("gstat")       
-p_load("nlme")
 p_load("automap")
 p_load("terra")
 
 # For run as background job
 NuM_L_pm = FALSE
-WuS_SuB = FALSE
+WuS_SuB_pm = TRUE
 
 # Observation column
 obs_col = "subMittelwert"
@@ -41,6 +40,10 @@ WuS_SuB_pred = pred_d[pred_d$GR_NAME == "West- und süddeutsches Schichtstufen- 
 # Sf df to pure df
 NuM_L_pred = as.data.frame(NuM_L_pred)
 WuS_SuB_pred = as.data.frame(WuS_SuB_pred)
+
+# Get the number of rows to calculate how many points were removed
+NuM_L_pred_n0 = nrow(NuM_L_pred)
+WuS_SuB_pred_n0 = nrow(WuS_SuB_pred)
 
 # Get unique values and frequency 
 aea_NuM_L_pred = table(NuM_L_pred$aea20)
@@ -104,10 +107,29 @@ WuS_SuB_pred = WuS_SuB_pred[, c("crestime", "cgwn", "cgeschw", "log10carea",
                               "lbm_class_Unbewachsen", "lbm_class_FeuchtgebieteWasser", 
                               "lbm_class_Siedlung", "X", "Y", "tc45", "tc315", "aea20_1", 
                              "aea20_2", "aea20_12", "aea20_13")]
+
+# Get the number of rows to calculate how many points were removed
+NuM_L_pred_n1 = nrow(NuM_L_pred)
+WuS_SuB_pred_n1 = nrow(WuS_SuB_pred)
   
 # Remove rows with missing data
 NuM_L_pred = NuM_L_pred[complete.cases(NuM_L_pred),]
 WuS_SuB_pred = WuS_SuB_pred[complete.cases(WuS_SuB_pred),]
+
+# Save prepared prediction dfs result
+#saveRDS(NuM_L_pred, 'NuM_L_pred.rds')
+#saveRDS(WuS_SuB_pred, 'WuS_SuB_pred.rds')
+
+# Get the number of rows to calculate how many points were removed
+NuM_L_pred_n2 = nrow(NuM_L_pred)
+WuS_SuB_pred_n2 = nrow(WuS_SuB_pred)
+
+NuM_L_aea_removed = 1-(NuM_L_pred_n1/NuM_L_pred_n0)
+NuM_L_NaN_removed = 1-(NuM_L_pred_n2/NuM_L_pred_n0) - NuM_L_aea_removed
+
+WuS_SuB_aea_removed = 1-(WuS_SuB_pred_n1/WuS_SuB_pred_n0)
+WuS_SuB_NaN_removed = 1-(WuS_SuB_pred_n2/WuS_SuB_pred_n0) - WuS_SuB_aea_removed
+
 ##
 ## End (manage predcition data) 
 ####
@@ -130,9 +152,6 @@ RF_fun = function(formula, data, obs_col){
   return_list = list(model = RF_model, train_data = data)
   return(return_list)
 }
-
-NuM_L_RF_model = RF_fun(data = NuM_L, formula = fo_NuM_L, obs_col = obs_col)
-RF_prediction = predict(object = NuM_L_RF_model$model, NuM_L_pred)
 
 # Create prediction function
 RF_oob_OK_pred_fun = function(object, newdata){
@@ -175,7 +194,7 @@ if (NuM_L_pm){
   NuM_L_pred_sp_df = RF_oob_OK_pred_fun(object = NuM_L_RF_model, 
                                         newdata = NuM_L_pred)
   # Save result
-  save(NuM_L_pred_sp_df, file = "Results/NuM_L_preds_for_pred_map.rds")
+  saveRDS(NuM_L_pred_sp_df, file = "Results/NuM_L_preds_for_pred_map.rds")
 }
 
 if (WuS_SuB_pm){
@@ -186,9 +205,73 @@ if (WuS_SuB_pm){
   WuS_SuB_pred_sp_df = RF_oob_OK_pred_fun(object = WuS_SuB_RF_model, 
                                         newdata = WuS_SuB_pred)
   # Save result
-  save(WuS_SuB_pred_sp_df, file = "Results/WuS_SuB_preds_for_pred_map.rds")
+  saveRDS(WuS_SuB_pred_sp_df, file = "Results/WuS_SuB_preds_for_pred_map.rds")
 }
-
 ################################################################################
 ## End (prediction) 
+################################################################################
+
+################################################################################
+## Post processing
+################################################################################
+# Load data
+NuM_L_pred_sp_df = readRDS("Results/orgNitrate/NuM_L_preds_for_pred_map.rds")
+WuS_SuB_pred_sp_df = readRDS("Results/orgNitrate/WuS_SuB_preds_for_pred_map.rds")
+
+## NuM_L
+# Remove unnecessary columns
+NuM_L_pred_sp_df = NuM_L_pred_sp_df[, c("final_prediction")]
+
+# Sp df to spatial pixels df
+NuM_L_spx_df = SpatialPixelsDataFrame(points = NuM_L_pred_sp_df, data = NuM_L_pred_sp_df@data)
+
+# Spatial pixels df to raster
+NuM_L_predciton_raster = terra::rast(NuM_L_spx_df)
+
+# Check result
+NuM_L_predciton_raster["final_prediction"]
+summary(NuM_L_predciton_raster["final_prediction"], size = nrow(NuM_L_pred_sp_df))
+plot(NuM_L_predciton_raster["final_prediction"])
+
+# Get the percentage of raster cells with values of and above 50 mg/l
+NuM_L_pred_sp_df$a50 = NuM_L_pred_sp_df$final_prediction
+NuM_L_pred_sp_df$a50[NuM_L_pred_sp_df$a50 < 50] <- 0
+NuM_L_pred_sp_df$a50[NuM_L_pred_sp_df$a50 >= 50] <- 1
+NuM_L_pred_a50_table = table(NuM_L_pred_sp_df$a50)
+NuM_L_pred_a50_table[2]/(NuM_L_pred_a50_table[2]+NuM_L_pred_a50_table[1])
+
+# Save the prediction raster 
+terra::writeRaster(NuM_L_predciton_raster, filename = "Results/NuM_L_predciton_raster.tif")
+
+## WuS_SuB
+# Remove unnecessary columns
+WuS_SuB_pred_sp_df = WuS_SuB_pred_sp_df[, c("final_prediction")]
+
+# Sp df to spatial pixels df
+WuS_SuB_spx_df = SpatialPixelsDataFrame(points = WuS_SuB_pred_sp_df, data = WuS_SuB_pred_sp_df@data)
+
+# Spatial pixels df to raster
+WuS_SuB_predciton_raster = terra::rast(WuS_SuB_spx_df)
+
+# Check result
+WuS_SuB_predciton_raster["final_prediction"]
+summary(WuS_SuB_predciton_raster["final_prediction"], size = nrow(WuS_SuB_pred_sp_df))
+plot(WuS_SuB_predciton_raster["final_prediction"])
+
+# Get the percentage of raster cells with values of and above 50 mg/l
+WuS_SuB_pred_sp_df$a50 = WuS_SuB_pred_sp_df$final_prediction
+WuS_SuB_pred_sp_df$a50[WuS_SuB_pred_sp_df$a50 < 50] <- 0
+WuS_SuB_pred_sp_df$a50[WuS_SuB_pred_sp_df$a50 >= 50] <- 1
+WuS_SuB_pred_a50_table = table(WuS_SuB_pred_sp_df$a50)
+WuS_SuB_pred_a50_table[2]/(WuS_SuB_pred_a50_table[2]+WuS_SuB_pred_a50_table[1])
+
+# Save the prediction raster 
+terra::writeRaster(WuS_SuB_predciton_raster, filename = "Results/WuS_SuB_predciton_raster.tif")
+
+## Calculate 95 quantile of all predicted values
+temp = append(NuM_L_pred_sp_df$final_prediction, WuS_SuB_pred_sp_df$final_prediction)
+all_p95 = quantile(x = temp, probs = c(0.95))
+
+################################################################################
+## End (post processing)
 ################################################################################

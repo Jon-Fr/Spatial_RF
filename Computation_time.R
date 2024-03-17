@@ -74,8 +74,8 @@ wd = 26976 # WuS_SuB
 ##
 
 # Set the size of the subsets
-n_train = 1000
-n_pred = 1000
+n_train = 250
+n_pred = 250
 n_total = n_train + n_pred
 
 # Set seed
@@ -112,11 +112,11 @@ MLR = FALSE
 bRF = FALSE
 RF_K = FALSE
 RFSI = FALSE
-RF_MEv = FALSE
+RF_MEv = TRUE
 loo_OK_RF = FALSE
 RF_oob_OK = FALSE
 OK_RF = FALSE
-UK = TRUE
+UK = FALSE
 RF_GLS  = FALSE
 ################################################################################
 ## End (preparation)
@@ -369,13 +369,23 @@ if (RF_MEv){
   start_time_pp = Sys.time()
   
   for (i in 1:1000){
+  ## Eigenvectors for the training data
   # Create matrix of spatial point coordinates 
-  coord_m = cbind(d_sample$X, d_sample$Y)
+  coord_m = cbind(d_train$X, d_train$Y)
   # Calculate Moran eigenvectors and eigenvalues (MEvEv)
-  MEvEv = spmoran::meigen(coords = coord_m, threshold = 0)
-  # Store eigenvectors in a df and combine it with the data df
+  MEvEv = spmoran::meigen(coords = coord_m, threshold = 0.25)
+  # Store eigenvectors in a df and combine it with the training data df
   Evec_df = as.data.frame(MEvEv$sf)
-  c_data = cbind(d_sample, Evec_df)
+  c_train = cbind(d_train, Evec_df)
+  
+  ## Eigenvectors for the prediction data
+  # Create matrix of spatial point coordinates 
+  coord_m = cbind(d_pred$X, d_pred$Y)
+  # Calculate Moran eigenvectors and eigenvalues
+  MEvEv_n = spmoran::meigen0(meig = MEvEv, coords0 = coord_m)
+  # Store eigenvectors in a df and combine it with the pred data df
+  Evec_ndf = as.data.frame(MEvEv_n$sf)
+  c_pred = cbind(d_pred, Evec_ndf)
   
   # Get first part of the formula 
   voi = all.vars(fo_RF)[1]
@@ -385,10 +395,6 @@ if (RF_MEv){
   # Create second part of the model formula and complete the formula
   fo_sp = paste(colnames(Evec_df), collapse="+")
   fo_c = as.formula(paste(fo_fp, fo_sp, sep="+"))
-  
-  # Recreate the subsets, so that the subsets contain the eigenvector values 
-  d_train = c_data[tt_ids[[1]][[1]]$train, ]
-  d_pred = c_data[tt_ids[[1]][[1]]$test, ]
   }
   
   # End time measurement (preprocessing)
@@ -400,7 +406,7 @@ if (RF_MEv){
   
   for (i in 1:1000){
   # Train model
-  RF_MEv_model = ranger::ranger(formula = fo_c, data = d_train, 
+  RF_MEv_model = ranger::ranger(formula = fo_c, data = c_train, 
                                  oob.error = FALSE, seed = 7)
   }
   
@@ -413,7 +419,7 @@ if (RF_MEv){
   
   for (i in 1:1000){
   # Prediction
-  RF_MEv_predi = predict(object = RF_MEv_model, data = d_pred)
+  RF_MEv_predi = predict(object = RF_MEv_model, data = c_pred)
   }
   
   # End time measurement (predict)
@@ -872,9 +878,9 @@ for (i1 in f_names_vec1){
       OK_RF_comp = append(OK_RF_comp, bygone_time_train + bygone_time_predict)
       # RF_GLS
     } else if (i1 == "WuS_SuB_CT_RF_GLS"){
-      RF_GLS_train = append(RF_GLS_train, bygone_time_train)
+      RF_GLS_train = append(RF_GLS_train, bygone_time_train*100)
       RF_GLS_predi = append(RF_GLS_predi, bygone_time_predict)
-      RF_GLS_comp = append(RF_GLS_comp, bygone_time_train + bygone_time_predict)
+      RF_GLS_comp = append(RF_GLS_comp, bygone_time_train*100 + bygone_time_predict)
       # RFSI
     } else if (i1 == "WuS_SuB_CT_RFSI"){
       RFSI_train = append(RFSI_train, bygone_time_train)
@@ -897,10 +903,10 @@ for (i1 in f_names_vec1){
     } else if (i1 == "WuS_SuB_CT_loo_OK_RF"){
       loo_OK_RF_train = append(loo_OK_RF_train, bygone_time_train)
       loo_OK_RF_predi = append(loo_OK_RF_predi, bygone_time_predict)
-      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro, bygone_time_pp)
+      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro, bygone_time_pp*100)
       loo_OK_RF_comp = append(loo_OK_RF_comp, bygone_time_train + 
                                 bygone_time_predict + 
-                                bygone_time_pp)
+                                bygone_time_pp*100)
     }
   }
 }

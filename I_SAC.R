@@ -1,5 +1,5 @@
 ################################################################################
-## Preparation (strictly necessary)
+## Preparation 
 ################################################################################
 # Load necessary packages
 library("pacman")
@@ -7,23 +7,15 @@ p_load("sp")
 p_load("sf")
 p_load("gstat")  
 p_load("automap")
+p_load("dplyr")
 
 # Fewer decimal places, apply penalty on exponential notation 
 options("scipen"= 999, "digits"=4)
 
-# Load data set formulas 
+# Load data sets and formulas 
 load("Data/WuS_SuB.rda")
 load("Data/NuM_L.rda")
-fo_lm_NuM_L = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                           nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                           agrum_log10_gwn + agrum_log10_geschw + Ackerland + lbm_class_Gruenland + 
-                           lbm_class_Unbewachsen + lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                           aea20_2 + aea20_8 + aea20_12 + X + Y)
-fo_lm_WuS_SuB = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                             nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                             agrum_log10_gwn + agrum_log10_geschw + Ackerland + lbm_class_Gruenland + 
-                             lbm_class_Unbewachsen + lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                             aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
+
 #N = NuM_L
 #W = WuS_SuB
 
@@ -112,13 +104,21 @@ par(mfrow = c(1, 1))
 ####
 ## Empirical semivariogram (EmSv) of the variable of interest
 ##
-emp_svario_N = gstat::variogram(subMittelwert ~1, data=sp_df_N, cutoff = 150000, 
+emp_svario_N = gstat::variogram(subMittelwert ~1, data=sp_df_N, cutoff = 10000, 
                               width = 100) 
+plot(emp_svario_N$dist, emp_svario_N$gamma, ylim = c(0,5000))
+
+emp_svario_N = gstat::variogram(bcNitrate ~1, data=sp_df_N, cutoff = 10000, 
+                                width = 10) 
 plot(emp_svario_N$dist, emp_svario_N$gamma)
 
-emp_svario_W = gstat::variogram(subMittelwert ~1, data=sp_df_W, cutoff = 175000, 
+emp_svario_W = gstat::variogram(subMittelwert ~1, data=sp_df_W, cutoff = 10000, 
                                 width = 100) 
-plot(emp_svario_W$dist, emp_svario_W$gamma)
+plot(emp_svario_W$dist, emp_svario_W$gamma, ylim = c(0,500))
+
+emp_svario_W = gstat::variogram(bcNitrate ~1, data=sp_df_W, cutoff = 10000, 
+                                width = 10) 
+plot(emp_svario_W$dist, emp_svario_W$gamma, ylim = c(0,20))
 
 # Fit variogram model
 vmf_N = automap::autofitVariogram(formula = subMittelwert ~ 1, 
@@ -171,14 +171,30 @@ legend(x = "bottomright" , legend = c("b)"), bty = "n")
 # Create MLR model
 MLR_model_N = lm(fo_lm_NuM_L, data=NuM_L)
 MLR_model_W = lm(fo_lm_WuS_SuB, data=WuS_SuB)
+MLR_model_N_bc = lm(fo_lm_NuM_L_bc, data=NuM_L)
+MLR_model_W_bc = lm(fo_lm_WuS_SuB_bc, data=WuS_SuB)
 # Add residuals to sp_df
 sp_df_N$mlr_resi = MLR_model_N$residuals
 sp_df_W$mlr_resi = MLR_model_W$residuals
+sp_df_N$mlr_resi_bc = MLR_model_N_bc$residuals
+sp_df_W$mlr_resi_bc = MLR_model_W_bc$residuals
 
 emp_svario_resi_N = gstat::variogram(mlr_resi~1, data=sp_df_N, cutoff = 50000, 
                                    width = 100) 
+plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma, ylim = c(0, 5000))
+
+emp_svario_resi_N = gstat::variogram(mlr_resi_bc~1, data=sp_df_N, cutoff = 50000, 
+                                     width = 100)
+plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma)
+
 emp_svario_resi_W = gstat::variogram(mlr_resi~1, data=sp_df_W, cutoff = 50000, 
                                      width = 100) 
+plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, ylim = c(0, 400))
+
+emp_svario_resi_W = gstat::variogram(mlr_resi_bc~1, data=sp_df_W, cutoff = 50000, 
+                                     width = 10)
+plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, ylim = c(0, 10))
+
 
 # Fit variogram model
 resid_vmf_N = automap::autofitVariogram(formula = mlr_resi~1, 
@@ -196,29 +212,33 @@ resid_vmf_W = automap::autofitVariogram(formula = mlr_resi~1,
                                         verbose = TRUE)
 
 # Get points to plot the variogram model 
-vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist = 50000)
-vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 50000)
+vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist = 51000)
+vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 51000)
+
+vm_points_N = dplyr::add_row( vm_points_N, dist = 0, gamma = 0, .before = 1)
+
+vm_points_W = dplyr::add_row(vm_points_W, dist = 0, gamma = 0, .before = 1)
 
 ## Set plot layout
-layout_mat <- matrix(c(1,2,1,3), nrow = 2, ncol = 2,
+layout_mat <- matrix(c(1,2,4,1,3,5), nrow = 2, ncol = 3,
                      byrow = TRUE)
 layout_mat
 
 my_lay = layout(mat = layout_mat, 
                 heights = c(2.5, 2.5),
-                widths = c(0.5, 4.5), respect =FALSE)
+                widths = c(0.5, 4.5, 4.5), respect =FALSE)
 layout.show(my_lay)
 
 # First plot
 par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext("Semivarianz", side = 4, line = -4, col = 1, cex = 1.1)
+mtext("Semivarianz", side = 4, line = -3, col = 1, cex = 1.1)
 
 # Second plot
-par(mar = c(2, 0, 2, 0.2)) # bottom, left, top, right margins
+par(mar = c(2, 1, 2, 0.2)) # bottom, left, top, right margins
 plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma, xlab = "", 
-     ylab = "", xlim = c(1200,49000), ylim = c(0, 3500), xaxt = "n",
+     ylab = "", xlim = c(1500,48500), ylim = c(0, 3500), xaxt = "n",
      yaxt = "n")
 axis(1, at = c(0, 10000, 20000, 30000, 40000, 50000),
      labels = c("", "", "", "", "", ""), cex.axis = 1.2)
@@ -231,9 +251,9 @@ lines(x = vm_points_N$dist,
 legend(x = "bottomright" , legend = c("a)"), bty = "n", cex = 1.25)
 
 # Third Plot
-par(mar = c(4, 0, 0, 0.2)) # bottom, left, top, right margins
+par(mar = c(4, 1, 0, 0.2)) # bottom, left, top, right margins
 plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, xlab = "",
-     ylab = "", xlim = c(1200,49000), ylim = c(0, 300), xaxt = "n", yaxt = "n")
+     ylab = "", xlim = c(1500,48500), ylim = c(0, 300), xaxt = "n", yaxt = "n")
 axis(1, at = c(0, 10000, 20000, 30000, 40000, 50000), 
      labels = c(0, 10, 20, 30, 40, 50), cex.axis = 1.2)
 axis(2, at = c(0, 50, 100, 150, 200, 250, 300, 350), 
@@ -243,6 +263,50 @@ lines(x = vm_points_W$dist,
       col = ("#0000FF"),
       lty = 1)
 legend(x = "bottomright" , legend = c("b)"), bty = "n", cex = 1.25)
+title(xlab = "Entfernung [km]", mgp = c(2.5, 2.5, 2.5), cex.lab = 1.25) 
+
+# Get points to plot 
+
+emp_svario_resi_N_n = gstat::variogram(mlr_resi~1, data=sp_df_N, cutoff = 50000, 
+                                     width = 100) 
+
+emp_svario_resi_W_n = gstat::variogram(mlr_resi~1, data=sp_df_W, cutoff = 50000, 
+                                     width = 100) 
+
+vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist = 11000)
+vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 11000)
+vm_points_N = dplyr::add_row( vm_points_N, dist = 0, gamma = 0, .before = 1)
+vm_points_W = dplyr::add_row(vm_points_W, dist = 0, gamma = 0, .before = 1)
+
+
+# Fourth plot
+par(mar = c(2, 1, 2, 0.2)) # bottom, left, top, right margins
+plot(emp_svario_resi_N_n$dist, emp_svario_resi_N_n$gamma, xlab = "", 
+     ylab = "", xlim = c(300,9750), ylim = c(0, 3500), xaxt = "n",
+     yaxt = "n")
+axis(1, at = c(0, 2000, 4000, 6000, 8000, 10000),
+     labels = c("", "", "", "", "", ""), cex.axis = 1.2)
+axis(2, at = c(0, 500, 1000, 1500, 2000, 2500, 3000, 3500), 
+     labels = c("", "", "", "", "", "", "", ""), cex.axis = 1.2)
+lines(x = vm_points_N$dist,
+      y = vm_points_N$gamma,
+      col = ("#0000FF"),
+      lty = 1)
+legend(x = "bottomright" , legend = c("b)"), bty = "n", cex = 1.25)
+
+# Fifth Plot
+par(mar = c(4, 1, 0, 0.2)) # bottom, left, top, right margins
+plot(emp_svario_resi_W_n$dist, emp_svario_resi_W_n$gamma, xlab = "",
+     ylab = "", xlim = c(300,9750), ylim = c(0, 300), xaxt = "n", yaxt = "n")
+axis(1, at = c(0, 2000, 4000, 6000, 8000, 10000), 
+     labels = c(0, 2, 4, 6, 8, 10), cex.axis = 1.2)
+axis(2, at = c(0, 50, 100, 150, 200, 250, 300, 350), 
+     labels = c("", "", "", "", "", "", "", ""), cex.axis = 1.2)
+lines(x = vm_points_W$dist,
+      y = vm_points_W$gamma,
+      col = ("#0000FF"),
+      lty = 1)
+legend(x = "bottomright" , legend = c("d)"), bty = "n", cex = 1.25)
 title(xlab = "Entfernung [km]", mgp = c(2.5, 2.5, 2.5), cex.lab = 1.25) 
 ##
 ## End (EmSv of the residuals of a multiple linear regression model)

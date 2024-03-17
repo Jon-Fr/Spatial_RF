@@ -188,7 +188,7 @@ WuS_SuB_mRMSE_df = data.frame(WuS_SuB_RF_oob_OK, WuS_SuB_loo_OK_RF,
 ################################################################################
 
 ####
-## Save mean RMSE values in vectors
+## Save mean RMSE and bias values in vectors
 ##
 
 # Create vectors
@@ -209,7 +209,25 @@ WuS_SuB_RF_MEv = c()
 WuS_SuB_OK_RF = c()  
 WuS_SuB_loo_OK_RF = c()  
 WuS_SuB_RF_oob_OK = c()
-WuS_SuB_UK = c() 
+WuS_SuB_UK = c()
+NuM_L_bRF_b = c()
+NuM_L_MLR_b = c() 
+NuM_L_RF_b = c()  
+NuM_L_RFSI_b = c()
+NuM_L_RF_MEv_b = c()  
+NuM_L_OK_RF_b = c() 
+NuM_L_loo_OK_RF_b = c()   
+NuM_L_RF_oob_OK_b = c()
+NuM_L_UK_b = c()
+WuS_SuB_bRF_b = c()
+WuS_SuB_MLR_b = c() 
+WuS_SuB_RF_b = c()  
+WuS_SuB_RFSI_b = c()
+WuS_SuB_RF_MEv_b = c()  
+WuS_SuB_OK_RF_b = c()  
+WuS_SuB_loo_OK_RF_b = c()  
+WuS_SuB_RF_oob_OK_b = c()
+WuS_SuB_UK_b = c() 
 
 # Vectors for the mean distance to the nearest neighbor 
 WuS_SuB_mean_nn_dist = c()
@@ -246,13 +264,16 @@ for (i1 in f_names_vec1){
       area_c2 = substr(i2, 1, 3)
       if (area_c1 == area_c2){
         load(f_name)
-        ## Get mean RMSE value and mean nearest neighbor distance
+        ## Get mean RMSE and bias value and mean nearest neighbor distance
         ## NuM_L_sp_cv_bRF
         if (i2 == "NuM_L_sp_cv_bRF_"){
           # RMSE
           err = summary(sp_cv_bRF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_bRF = append(NuM_L_bRF, mRMSE)
+          # Bias
+          mBias = err["test.bias", "mean"]
+          NuM_L_bRF_b = append(NuM_L_bRF_b, mBias)
           # nn distance
           nn_distances = c()
           for (i4 in 1:length(sp_cv_bRF$error_fold[[1]])){
@@ -265,47 +286,66 @@ for (i1 in f_names_vec1){
           err = summary(sp_cv_MLR$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_MLR = append(NuM_L_MLR, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_MLR_b = append(NuM_L_MLR_b, mBias)
         ## NuM_L_sp_cv_RF
         } else if (i2 == "NuM_L_sp_cv_RF_"){
           err = summary(sp_cv_RF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_RF = append(NuM_L_RF, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_RF_b = append(NuM_L_RF_b, mBias)
         ## NuM_L_sp_cv_RFSI
         } else if (i2 == "NuM_L_sp_cv_RFSI_"){
           err = summary(sp_cv_RFSI$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_RFSI = append(NuM_L_RFSI, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_RFSI_b = append(NuM_L_RFSI_b, mBias)
         ## NuM_L_sp_cv_RF_MEv
         } else if (i2 == "NuM_L_sp_cv_RF_MEv_"){
           err = summary(sp_cv_RF_MEv$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_RF_MEv = append(NuM_L_RF_MEv, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_RF_MEv_b = append(NuM_L_RF_MEv_b, mBias)
         ## NuM_L_sp_cv_OK_RF
         } else if (i2 == "NuM_L_sp_cv_OK_RF_"){
           err = summary(sp_cv_OK_RF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_OK_RF = append(NuM_L_OK_RF, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_OK_RF_b = append(NuM_L_OK_RF_b, mBias)
         ## NuM_L_sp_cv_loo_OK_RF
         } else if (i2 == "NuM_L_sp_cv_loo_OK_RF_"){
           err = summary(sp_cv_loo_OK_RF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_loo_OK_RF = append(NuM_L_loo_OK_RF, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_loo_OK_RF_b = append(NuM_L_loo_OK_RF_b, mBias)
         ## NuM_L_sp_cv_RF_oob_OK
         } else if (i2 == "NuM_L_sp_cv_RF_oob_OK_"){
           err = summary(sp_cv_RF_oob_OK$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_RF_oob_OK = append(NuM_L_RF_oob_OK, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_RF_oob_OK_b = append(NuM_L_RF_oob_OK_b, mBias)
         ## NuM_L_sp_cv_UK
         } else if (i2 == "NuM_L_sp_cv_UK_"){
           err = summary(sp_cv_UK$error_fold)
           mRMSE = err["test.rmse", "mean"]
           NuM_L_UK = append(NuM_L_UK, mRMSE)
+          mBias = err["test.bias", "mean"]
+          NuM_L_UK_b = append(NuM_L_UK_b, mBias)
          ## WuS_SuB_sp_cv_bRF
         } else if (i2 == "WuS_SuB_sp_cv_bRF_"){
           # RMSE
           err = summary(sp_cv_bRF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_bRF = append(WuS_SuB_bRF, mRMSE)
+          # Bias
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_bRF_b = append(WuS_SuB_bRF_b, mBias)
           # nn distance
           nn_distances = c()
           for (i4 in 1:length(sp_cv_bRF$error_fold[[1]])){
@@ -318,41 +358,57 @@ for (i1 in f_names_vec1){
           err = summary(sp_cv_MLR$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_MLR = append(WuS_SuB_MLR, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_MLR_b = append(WuS_SuB_MLR_b, mBias)
           ## WuS_SuB_sp_cv_RF
         } else if (i2 == "WuS_SuB_sp_cv_RF_"){
           err = summary(sp_cv_RF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_RF = append(WuS_SuB_RF, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_RF_b = append(WuS_SuB_RF_b, mBias)
           ## WuS_SuB_sp_cv_RFSI
         } else if (i2 == "WuS_SuB_sp_cv_RFSI_"){
           err = summary(sp_cv_RFSI$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_RFSI = append(WuS_SuB_RFSI, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_RFSI_b = append(WuS_SuB_RFSI_b, mBias)
           ## WuS_SuB_sp_cv_RF_MEv
         } else if (i2 == "WuS_SuB_sp_cv_RF_MEv_"){
           err = summary(sp_cv_RF_MEv$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_RF_MEv = append(WuS_SuB_RF_MEv, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_RF_MEv_b = append(WuS_SuB_RF_MEv_b, mBias)
           ## WuS_SuB_sp_cv_OK_RF
         } else if (i2 == "WuS_SuB_sp_cv_OK_RF_"){
           err = summary(sp_cv_OK_RF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_OK_RF = append(WuS_SuB_OK_RF, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_OK_RF_b = append(WuS_SuB_OK_RF_b, mBias)
           ## WuS_SuB_sp_cv_loo_OK_RF
         } else if (i2 == "WuS_SuB_sp_cv_loo_OK_RF_"){
           err = summary(sp_cv_loo_OK_RF$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_loo_OK_RF = append(WuS_SuB_loo_OK_RF, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_loo_OK_RF_b = append(WuS_SuB_loo_OK_RF_b, mBias)
           ## WuS_SuB_sp_cv_RF_oob_OK
         } else if (i2 == "WuS_SuB_sp_cv_RF_oob_OK_"){
           err = summary(sp_cv_RF_oob_OK$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_RF_oob_OK = append(WuS_SuB_RF_oob_OK, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_RF_oob_OK_b = append(WuS_SuB_RF_oob_OK_b, mBias)
           ## WuS_SuB_sp_cv_UK
         } else if (i2 == "WuS_SuB_sp_cv_UK_"){
           err = summary(sp_cv_UK$error_fold)
           mRMSE = err["test.rmse", "mean"]
           WuS_SuB_UK = append(WuS_SuB_UK, mRMSE)
+          mBias = err["test.bias", "mean"]
+          WuS_SuB_UK_b = append(WuS_SuB_UK_b, mBias)
         }
         
       }
@@ -364,7 +420,7 @@ for (i1 in f_names_vec1){
 NuM_L_mean_sqrt_nn_dist = sqrt(NuM_L_mean_nn_dist)
 WuS_SuB_mean_sqrt_nn_dist = sqrt(WuS_SuB_mean_nn_dist)        
 ##
-## End (save mean RMSE values in vectors)
+## End (save mean RMSE and bias values in vectors)
 ####
 
 
@@ -381,8 +437,19 @@ WuS_SuB_mRMSE_df = data.frame(WuS_SuB_UK, WuS_SuB_RF_oob_OK, WuS_SuB_loo_OK_RF,
                             WuS_SuB_RF_MEv, WuS_SuB_RFSI, WuS_SuB_RF, WuS_SuB_bRF,
                             WuS_SuB_MLR, WuS_SuB_OK_RF)
 
+NuM_L_mBias_df = data.frame(NuM_L_UK_b, NuM_L_RF_oob_OK_b, NuM_L_loo_OK_RF_b, 
+                            NuM_L_RF_MEv_b, NuM_L_RFSI_b, NuM_L_RF_b, NuM_L_bRF_b,
+                            NuM_L_MLR_b, NuM_L_OK_RF_b)
+
+WuS_SuB_mBias_df = data.frame(WuS_SuB_UK_b, WuS_SuB_RF_oob_OK_b, WuS_SuB_loo_OK_RF_b, 
+                              WuS_SuB_RF_MEv_b, WuS_SuB_RFSI_b, WuS_SuB_RF_b, WuS_SuB_bRF_b,
+                              WuS_SuB_MLR_b, WuS_SuB_OK_RF_b)
+
 # Save dfs
 #save(NuM_L_mRMSE_df, WuS_SuB_mRMSE_df, file = "mRMSE_dfs_org.rda")
+#save(NuM_L_mBias_df, WuS_SuB_mBias_df, file = "mBias_dfs_org.rda")
+
+
 
 # Create color vector 
 col_vec = c("#666666", "#9900FF", "#0000FF", "#FF0000", "#FF9933", "#33CC33",
@@ -403,7 +470,7 @@ layout.show(my_lay)
 par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Mittlerer RMSE"),
+mtext(expression("Mittlerer RMSE [mg/L]"),
       side = 4, line = -4, col = 1, cex = 1.1)
 
 ## NuM_L
@@ -454,10 +521,10 @@ plot(x = 1,
      #yaxt = "n",
      main = "",
      type = "n")
-axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
-               100.19980, 130.15376, 160.12495, 200.09998), 
-     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
-                40040))
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
 #axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
 
 # Plot mRMSE values
@@ -482,6 +549,107 @@ legend(x = "bottomright", cex = 1, ncol = 2,
                 "#66FFFF", "#0000FF", "#FF9933"))
 
 legend(x = "bottomleft" , legend = c("b)"), bty = "n", cex = 1.25)
+
+## Create difference to lowest RMSE dfs
+# Create vector for the values
+lR_vec_NuM_L = c()
+lR_vec_WuS_SuB = c()
+# For loop
+for(i in 1:nrow(WuS_SuB_mRMSE_df)){
+  lR_vec_WuS_SuB = append(lR_vec_WuS_SuB, min(WuS_SuB_mRMSE_df[i,]))
+}
+for(i in 1:nrow(NuM_L_mRMSE_df)){
+  lR_vec_NuM_L = append(lR_vec_NuM_L, min(NuM_L_mRMSE_df[i,]))
+}
+# Create dfs
+Diff_to_lR_NuM_L = NuM_L_mRMSE_df - lR_vec_NuM_L
+Diff_to_lR_WuS_SuB = WuS_SuB_mRMSE_df - lR_vec_WuS_SuB
+
+## Plot results
+# First plot
+par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
+plot(NULL, ylab = "", bty = "n", 
+     xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
+mtext(expression("Differenz zum niedrigsten mittleren RMSE [mg/L]"),
+      side = 4, line = -4, col = 1, cex = 1.1)
+
+## NuM_L
+# Margins
+par(mar = c(3, 0, 1, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "", 
+     ylab = "",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 25),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 2.236068, 10.95445, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 5, 120, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(Diff_to_lR_NuM_L)){
+  # Points
+  points(x = NuM_L_mean_sqrt_nn_dist,
+         y = Diff_to_lR_NuM_L[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = NuM_L_mean_sqrt_nn_dist,
+        y = Diff_to_lR_NuM_L[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+legend(x = "topright" , legend = c("a)"), bty = "n", cex = 1.25)
+
+## WuS_SuB
+# Margins
+par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
+# Create a blank plotting space
+plot(x = 1,                 
+     xlab = "Vorhersagedistanz [m]", 
+     #ylab = "",
+     xlim = c(7, 194),
+     xaxt = "n",
+     ylim = c(0, 6),
+     #yaxt = "n",
+     main = "",
+     type = "n")
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
+#axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
+
+# Plot mRMSE values
+for (i in 1:ncol(Diff_to_lR_WuS_SuB)){
+  # Points
+  points(x = WuS_SuB_mean_sqrt_nn_dist,
+         y = Diff_to_lR_WuS_SuB[,i],
+         pch = 21,
+         bg = col_vec[i])
+  # Line
+  lines(x = WuS_SuB_mean_sqrt_nn_dist,
+        y = Diff_to_lR_WuS_SuB[,i],
+        col = col_vec[i],
+        lty = 2, lwd = 2)
+}
+
+# Legend
+legend(x = "top", cex = 1, ncol = 2,
+       legend = c("MLR", "UK", "RF", "RF-K", "RF-MEv", "RF-oob-OK", "OK-RF", 
+                  "RF-loo-OK", "RFSI"),
+       fill = c("#000000", "#666666", "#CCCCCC", "#33CC33", "#FF0000", "#9900FF",
+                "#66FFFF", "#0000FF", "#FF9933"))
+
+legend(x = "topright" , legend = c("b)"), bty = "n", cex = 1.25)
+
 ##
 ## End (plot SPEP)
 ####
@@ -1104,7 +1272,7 @@ plot(x = 1,
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
-     ylim = c(-1, 11),
+     ylim = c(-4, 26),
      #yaxt = "n",
      main = "",
      type = "n")
@@ -1161,7 +1329,7 @@ for (i in 1:ncol(NuM_L_X_df)){
         lty = 2, lwd = 2)
 }
 
-legend(x = "top" , legend = c("X Koordinate"), cex = 1.25)
+legend(x = "top" , legend = c("X-Koordinate"), cex = 1.25)
 
 # Y
 # Margins
@@ -1195,7 +1363,7 @@ for (i in 1:ncol(NuM_L_Y_df)){
         lty = 2, lwd = 2)
 }
 
-legend(x = "top" , legend = c("Y Koordinate"), cex = 1.25)
+legend(x = "top" , legend = c("Y-Koordinate"), cex = 1.25)
 
 # tc45
 # Margins
@@ -1207,13 +1375,13 @@ plot(x = 1,
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
-     ylim = c(-3, 6),
+     ylim = c(-4, 26),
      #yaxt = "n",
      type = "n")
-axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
-               100.19980, 130.15376, 160.12495, 200.09998), 
-     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
-                40040))
+axis(1, at = c(0, 2.236068, 10.95445, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 5, 120, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
 #axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
 
 # Plot values
@@ -1263,7 +1431,7 @@ plot(x = 1,
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
-     ylim = c(0, 7),
+     ylim = c(0, 9),
      #yaxt = "n",
      main = "",
      type = "n")
@@ -1331,7 +1499,7 @@ plot(x = 1,
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
-     ylim = c(0, 8),
+     ylim = c(0, 9),
      #yaxt = "n",
      main = "",
      type = "n")
@@ -1366,13 +1534,13 @@ plot(x = 1,
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
-     ylim = c(0, 1.5),
+     ylim = c(0, 9),
      #yaxt = "n",
      type = "n")
-axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 80.31189,
-               100.19980, 130.15376, 160.12495, 200.09998), 
-     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10040, 16940, 25640, 
-                40040))
+axis(1, at = c(0, 5, 11.18034, 21.21320, 30.82207, 40.62019, 60.41523, 
+               80.31189, 100.24969, 130.19217, 160.15617, 200.12496), 
+     labels = c(0, 25, 125, 450, 950, 1650, 3650, 6450, 10050, 16950, 25650, 
+                40050))
 #axis(2, at = c(1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6))
 
 # Plot values

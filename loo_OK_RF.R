@@ -24,10 +24,10 @@ options("scipen"= 999, "digits"=4)
 data_set = "WuS_SuB"
 load("Data/WuS_SuB.rda")
 d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB_bc
+fo_RF = fo_RF_WuS_SuB
 
 # Set buffer 
-buffer = 1600
+buffer = 3600
 
 # Set tolerance (all = partition_loo without buffer)
 tolerance = 100
@@ -67,6 +67,9 @@ fo = as.formula(bcNitrate ~ crestime + cgwn + cgeschw + log10carea + elevation +
 
 # OK formula
 ok_fo = as.formula(bcNitrate ~ 1)
+
+# loo-OK buffer distance 
+loo_buffer = 0
 ##
 ## End Model argument preparation)
 ####
@@ -140,7 +143,7 @@ doParallel::registerDoParallel(cluster)
 
 # Execute loo-OK function
 loo_ok_res = loo_OK_fun(data = d, 
-                        buffer_dist = buffer, 
+                        buffer_dist = loo_buffer, 
                         ok_fo = ok_fo,
                         nno = 200) 
 

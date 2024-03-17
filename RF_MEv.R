@@ -17,10 +17,10 @@ options("scipen"= 999, "digits"=4)
 data_set = "WuS_SuB"
 load("Data/WuS_SuB.rda")
 d = WuS_SuB
-fo_RF = fo_RF_WuS_SuB_bc
+fo_RF = fo_RF_WuS_SuB
 
 # Set buffer 
-buffer = 1600
+buffer = 40000
 
 # Set tolerance (all = partition_loo without buffer)
 tolerance = 100
@@ -109,6 +109,11 @@ RF_MEv_pred_fun = function(object, newdata){
 # Start time measurement
 start_time = Sys.time()
 print(start_time)
+
+#test = RF_MEv_fun(formula = fo_RF_WuS_SuB, data = d[c(1:2359),])
+#test1 = partition_fun(data = d, coords = c("X","Y"), buffer = buffer, tolerance = tolerance)
+#test2 = RF_MEv_fun(formula = fo_RF_NuM_L, data = d[test1[[1]]$"86"$train,])
+
 
 # Perform the spatial cross-validation
 sp_cv_RF_MEv = sperrorest::sperrorest(formula = fo_RF, data = d, 

@@ -3,5 +3,6 @@
 *.RData
 *.Ruserdata
 *.rda
+*.rds
 *.gpkg
 .Rproj.user

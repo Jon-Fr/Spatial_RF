@@ -483,7 +483,7 @@ layout.show(my_lay)
 par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Mittlerer RMSE"),
+mtext(expression("Mittlerer RMSE [Box-Cox]"),
       side = 4, line = -4, col = 1, cex = 1.1)
 
 ## NuM_L
@@ -583,7 +583,7 @@ Diff_to_lR_WuS_SuB = WuS_SuB_mRMSE_df_bc - lR_vec_WuS_SuB
 par(mar = c(2, 0, 0, 0)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Differenz zum niedrigsten mittleren RMSE"),
+mtext(expression("Differenz zum niedrigsten mittleren RMSE [Box-Cox]"),
       side = 4, line = -4, col = 1, cex = 1.1)
 
 ## NuM_L

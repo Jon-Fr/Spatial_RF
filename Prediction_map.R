@@ -124,11 +124,15 @@ WuS_SuB_pred = WuS_SuB_pred[complete.cases(WuS_SuB_pred),]
 NuM_L_pred_n2 = nrow(NuM_L_pred)
 WuS_SuB_pred_n2 = nrow(WuS_SuB_pred)
 
-NuM_L_aea_removed = 1-(NuM_L_pred_n1/NuM_L_pred_n0)
-NuM_L_NaN_removed = 1-(NuM_L_pred_n2/NuM_L_pred_n0) - NuM_L_aea_removed
+NuM_L_aea_removed = NuM_L_pred_n0 - NuM_L_pred_n1
+NuM_L_aea_removed_p = (NuM_L_aea_removed/NuM_L_pred_n0) * 100
+NuM_L_NaN_removed = NuM_L_pred_n0 - NuM_L_pred_n2 - NuM_L_aea_removed
+NuM_L_NaN_removed_p = (NuM_L_NaN_removed/NuM_L_pred_n0) * 100
 
-WuS_SuB_aea_removed = 1-(WuS_SuB_pred_n1/WuS_SuB_pred_n0)
-WuS_SuB_NaN_removed = 1-(WuS_SuB_pred_n2/WuS_SuB_pred_n0) - WuS_SuB_aea_removed
+WuS_SuB_aea_removed = WuS_SuB_pred_n0 - WuS_SuB_pred_n1
+WuS_SuB_aea_removed_p = (WuS_SuB_aea_removed/WuS_SuB_pred_n0) * 100
+WuS_SuB_NaN_removed = WuS_SuB_pred_n0 - WuS_SuB_pred_n2 - WuS_SuB_aea_removed
+WuS_SuB_NaN_removed_p = (WuS_SuB_NaN_removed/WuS_SuB_pred_n0) * 100
 
 ##
 ## End (manage predcition data) 

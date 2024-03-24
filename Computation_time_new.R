@@ -1,6 +1,23 @@
 ################################################################################
 ## Preparation (strictly necessary)
 ################################################################################
+# Decide which models to run
+MLR = TRUE
+bRF = TRUE
+RF_K = TRUE
+RF_GLS  = TRUE
+RFSI = TRUE
+RF_MEv = TRUE
+loo_OK_RF = TRUE
+RF_oob_OK = TRUE
+OK_RF = TRUE
+UK = TRUE
+
+
+# Set the size of the training and test data set
+n_train = 2000
+n_pred = n_train * 25
+
 # Load necessary packages
 library("pacman")
 p_load("sperrorest")
@@ -22,38 +39,40 @@ options("scipen"= 999, "digits"=4)
 # Load data and formulas
 data_set = "WuS_SuB"
 load("Data/WuS_SuB.rda")
+pred_d = readRDS("Data/WuS_SuB_pred.rds")
+pred_d$ID_WuS_SuB = 1:nrow(pred_d)
 d = WuS_SuB
 fo_lm = fo_lm_WuS_SuB
 fo_RF = fo_RF_WuS_SuB
 
 # Formula for base RF-model
 bRF_fo = as.formula(subMittelwert  ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                  agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
+                      nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                      agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
+                      lbm_class_Gruenland + lbm_class_Unbewachsen + 
+                      lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                      aea20_1 + aea20_2 + aea20_12 + aea20_13 + X + Y)
 
 # Formula for loo-OK-RF
 loo_OK_RF_fo = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
-                  nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
-                  agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
-                  lbm_class_Gruenland + lbm_class_Unbewachsen + 
-                  lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
-                  tc45 + tc315 + ok_inter_pred + ok_inter_var + 
-                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
+                            nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                            agrum_log10_gwn + agrum_log10_geschw + Ackerland + 
+                            lbm_class_Gruenland + lbm_class_Unbewachsen + 
+                            lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + X + Y + 
+                            tc45 + tc315 + ok_inter_pred + ok_inter_var + 
+                            aea20_1 + aea20_2 + aea20_12 + aea20_13)
 
 # OK formula
 ok_fo = as.formula(subMittelwert  ~ 1)
 
 # Explanatory variables and number of explanatory variables for RF-GLS
 ex_v_columns = c("crestime", "cgwn", "cgeschw", "log10carea", "elevation",
-                   "nfk", "humus", "cAckerland", "log10_gwn", 
-                   "agrum_log10_restime", "agrum_log10_gwn", "agrum_log10_geschw",
-                   "Ackerland", "lbm_class_Gruenland", "lbm_class_Unbewachsen", 
-                   "lbm_class_FeuchtgebieteWasser", "lbm_class_Siedlung", "X", 
-                   "Y", "tc45", "tc315", "aea20_1", "aea20_2", "aea20_12", 
-                   "aea20_13")
+                 "nfk", "humus", "cAckerland", "log10_gwn", 
+                 "agrum_log10_restime", "agrum_log10_gwn", "agrum_log10_geschw",
+                 "Ackerland", "lbm_class_Gruenland", "lbm_class_Unbewachsen", 
+                 "lbm_class_FeuchtgebieteWasser", "lbm_class_Siedlung", "X", 
+                 "Y", "tc45", "tc315", "aea20_1", "aea20_2", "aea20_12", 
+                 "aea20_13")
 num_of_ex_v = length(ex_v_columns )
 
 # Observation column for RFSI, RF-oob-OK and RF-GLS
@@ -73,25 +92,21 @@ wd = 26976 # WuS_SuB
 ## Sample a training and test/prediction subset 
 ##
 
-# Set the size of the subsets
-n_train = 250
-n_pred = 250
-n_total = n_train + n_pred
-
 # Set seed
-set.seed(7)
+set.seed(77)
 
-# Draw a sample of size n-total from the data set
-sample_ids = sample(2360, size = n_total)
+## Draw a sample of size n-training from the WuS_SuB data set
+# Get row ids
+train_sample_ids = sample(2360, size = n_train)
+# Get data
+d_train  = d[train_sample_ids, ]
 
-d_sample = d[sample_ids, ]
+## Draw a sample of size n-prediction from the WuS_SuB prediction data set
+# Get row ids
+pred_sample_ids = sample(50680, size = n_pred)
+# Get data
+d_pred  = pred_d[pred_sample_ids, ]
 
-# Get the train and prediction subsets
-tt_ids = sperrorest::partition_cv(data = d_sample, coords = c("X", "Y"), 
-                                  nfold = 2, repetition = 1, seed1 = 7)
-
-d_train = d_sample[tt_ids[[1]][[1]]$train, ]
-d_pred = d_sample[tt_ids[[1]][[1]]$test, ]
 ##
 ## End (sample a training and test/prediction subset)
 ####
@@ -107,48 +122,45 @@ ex_v_matrix_train = data.matrix(d_train[, ex_v_columns])
 ex_v_matrix_pred = data.matrix(d_pred[, ex_v_columns])
 observations = d_train[, obs_col]
 
-# Decide which models to run
-MLR = FALSE
-bRF = FALSE
-RF_K = FALSE
-RFSI = FALSE
-RF_MEv = TRUE
-loo_OK_RF = FALSE
-RF_oob_OK = FALSE
-OK_RF = FALSE
-UK = FALSE
-RF_GLS  = FALSE
 ################################################################################
 ## End (preparation)
 ################################################################################
-
 
 ################################################################################
 ## RF-GLS
 ################################################################################
 if (RF_GLS){
+  # Set number of repetitions for train
+  if (n_train == 500){
+    nrep = 20
+  } else if (n_train == 1000){
+    nrep = 2
+  } else {
+    nrep = 1
+  }
   # Set seed
-  set.seed(7)
+  set.seed(77)
+  
   # Start time measurement (train)
   start_time_train = Sys.time()
   
-  for (i in 1:10){
-  # Train model
-  RF_GLS_M = RandomForestsGLS::RFGLS_estimate_spatial(
-    coords = c_matrix_train,
-    X = ex_v_matrix_train,
-    y = observations,
-    param_estimate = TRUE,
-    cov.model = "exponential",
-    mtry = floor(sqrt(num_of_ex_v)),
-    h = 20)
-  
-  # End time measurement (train)
-  end_time_train = Sys.time()
-  bygone_time_train = end_time_train - start_time_train
-  
-  # Start time measurement (predict)
-  start_time_predict = Sys.time()
+  for (i in 1:nrep){
+    # Train model
+    RF_GLS_M = RandomForestsGLS::RFGLS_estimate_spatial(
+      coords = c_matrix_train,
+      X = ex_v_matrix_train,
+      y = observations,
+      param_estimate = TRUE,
+      cov.model = "exponential",
+      mtry = floor(sqrt(num_of_ex_v)),
+      h = 20)
+    
+    # End time measurement (train)
+    end_time_train = Sys.time()
+    bygone_time_train = end_time_train - start_time_train
+    
+    # Start time measurement (predict)
+    start_time_predict = Sys.time()
   }
   
   for (i in 1:1000){
@@ -164,7 +176,7 @@ if (RF_GLS){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_RF_GLS_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_RF_GLS_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_train, bygone_time_predict, file = file_name)
@@ -203,7 +215,7 @@ if (MLR){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_MLR_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_MLR_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_train, bygone_time_predict, file = file_name)
@@ -221,11 +233,11 @@ if (bRF){
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Train model
-  bRF_model = ranger::ranger(formula = bRF_fo, 
-                             data = d_train,
-                             oob.error = FALSE,
-                             seed = 7)
+    # Train model
+    bRF_model = ranger::ranger(formula = bRF_fo, 
+                               data = d_train,
+                               oob.error = FALSE,
+                               seed = 7)
   }
   
   # End time measurement (train)
@@ -236,8 +248,8 @@ if (bRF){
   start_time_predict = Sys.time()
   
   for (i in 1:1000){
-  # Prediction
-  bRF_predi = predict(object = bRF_model, data = d_pred)
+    # Prediction
+    bRF_predi = predict(object = bRF_model, data = d_pred)
   }
   
   # End time measurement (predict)
@@ -245,7 +257,7 @@ if (bRF){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_bRF_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_bRF_", as.character(n_train),
                     ".rda", sep = "")
   
   # Save result 
@@ -264,11 +276,11 @@ if (RF_K){
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Train model
-  RF_model = ranger::ranger(formula = fo_RF, 
-                             data = d_train,
-                             oob.error = FALSE,
-                             seed = 7)
+    # Train model
+    RF_model = ranger::ranger(formula = fo_RF, 
+                              data = d_train,
+                              oob.error = FALSE,
+                              seed = 7)
   }
   
   # End time measurement (train)
@@ -279,8 +291,8 @@ if (RF_K){
   start_time_predict = Sys.time()
   
   for (i in 1:1000){
-  # Prediction
-  RF_predi = predict(object = RF_model, data = d_pred)
+    # Prediction
+    RF_predi = predict(object = RF_model, data = d_pred)
   }
   
   # End time measurement (predict)
@@ -288,7 +300,7 @@ if (RF_K){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_RF_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_RF_", as.character(n_train),
                     ".rda", sep = "")
   
   # Save result 
@@ -307,22 +319,22 @@ if (RFSI){
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Create model
-  RFSI_model = meteo::rfsi(formula = fo_RF,
-                           data = d_train,
-                           s.crs = c_r_s,
-                           data.staid.x.y.z = d.staid.x.y.z,
-                           n.obs = 5, # number of nearest observations
-                           progress = FALSE,
-                           # ranger parameters
-                           seed = 7,
-                           oob.error = FALSE,
-                           num.trees = 500,
-                           sample.fraction = 1,
-                           min.node.size = 5,
-                           min.bucket = 1,
-                           max.depth = 0,
-                           splitrule = "variance")
+    # Create model
+    RFSI_model = meteo::rfsi(formula = fo_RF,
+                             data = d_train,
+                             s.crs = c_r_s,
+                             data.staid.x.y.z = d.staid.x.y.z,
+                             n.obs = 5, # number of nearest observations
+                             progress = FALSE,
+                             # ranger parameters
+                             seed = 7,
+                             oob.error = FALSE,
+                             num.trees = 500,
+                             sample.fraction = 1,
+                             min.node.size = 5,
+                             min.bucket = 1,
+                             max.depth = 0,
+                             splitrule = "variance")
   }
   
   # End time measurement (train)
@@ -333,17 +345,17 @@ if (RFSI){
   start_time_predict = Sys.time()
   
   for (i in 1:1000){
-  # Prediction
-  RFSI_prediction = meteo::pred.rfsi(model = RFSI_model,
-                                     data = d_train,
-                                     s.crs = c_r_s,
-                                     data.staid.x.y.z = d.staid.x.y.z,
-                                     obs.col = obs_col,
-                                     newdata = d_pred,
-                                     newdata.staid.x.y.z = d.staid.x.y.z,
-                                     newdata.s.crs = c_r_s,
-                                     progress = FALSE,
-                                     soil3d=FALSE)
+    # Prediction
+    RFSI_prediction = meteo::pred.rfsi(model = RFSI_model,
+                                       data = d_train,
+                                       s.crs = c_r_s,
+                                       data.staid.x.y.z = d.staid.x.y.z,
+                                       obs.col = obs_col,
+                                       newdata = d_pred,
+                                       newdata.staid.x.y.z = d.staid.x.y.z,
+                                       newdata.s.crs = c_r_s,
+                                       progress = FALSE,
+                                       soil3d=FALSE)
   }
   
   # End time measurement (predict)
@@ -351,7 +363,7 @@ if (RFSI){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_RFSI_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_RFSI_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_train, bygone_time_predict, file = file_name)
@@ -360,40 +372,50 @@ if (RFSI){
 ## End (RFSI)
 ################################################################################
 
+
 ################################################################################
 ## RF-MEv
 ################################################################################
 if (RF_MEv){
+  # Set number of repetitions for preprocessing
+  if (n_train == 500){
+    nrep = 1000
+  } else if (n_train == 1000){
+    nrep = 500
+  } else {
+    nrep = 100
+  }
+  
   # Start time measurement (preprocessing)
   start_time_pp = Sys.time()
   
-  for (i in 1:1000){
-  ## Eigenvectors for the training data
-  # Create matrix of spatial point coordinates 
-  coord_m = cbind(d_train$X, d_train$Y)
-  # Calculate Moran eigenvectors and eigenvalues (MEvEv)
-  MEvEv = spmoran::meigen(coords = coord_m, threshold = 0.25)
-  # Store eigenvectors in a df and combine it with the training data df
-  Evec_df = as.data.frame(MEvEv$sf)
-  c_train = cbind(d_train, Evec_df)
-  
-  ## Eigenvectors for the prediction data
-  # Create matrix of spatial point coordinates 
-  coord_m = cbind(d_pred$X, d_pred$Y)
-  # Calculate Moran eigenvectors and eigenvalues
-  MEvEv_n = spmoran::meigen0(meig = MEvEv, coords0 = coord_m)
-  # Store eigenvectors in a df and combine it with the pred data df
-  Evec_ndf = as.data.frame(MEvEv_n$sf)
-  c_pred = cbind(d_pred, Evec_ndf)
-  
-  # Get first part of the formula 
-  voi = all.vars(fo_RF)[1]
-  covair = all.vars(fo_RF)[-1]
-  covair_part = paste(covair, collapse = "+")
-  fo_fp = paste(voi, covair_part, sep = "~")
-  # Create second part of the model formula and complete the formula
-  fo_sp = paste(colnames(Evec_df), collapse="+")
-  fo_c = as.formula(paste(fo_fp, fo_sp, sep="+"))
+  for (i in 1:nrep){
+    ## Eigenvectors for the training data
+    # Create matrix of spatial point coordinates 
+    coord_m = cbind(d_train$X, d_train$Y)
+    # Calculate Moran eigenvectors and eigenvalues (MEvEv)
+    MEvEv = spmoran::meigen(coords = coord_m, threshold = 0.25)
+    # Store eigenvectors in a df and combine it with the training data df
+    Evec_df = as.data.frame(MEvEv$sf)
+    c_train = cbind(d_train, Evec_df)
+    
+    ## Eigenvectors for the prediction data
+    # Create matrix of spatial point coordinates 
+    coord_m = cbind(d_pred$X, d_pred$Y)
+    # Calculate Moran eigenvectors and eigenvalues
+    MEvEv_n = spmoran::meigen0(meig = MEvEv, coords0 = coord_m)
+    # Store eigenvectors in a df and combine it with the pred data df
+    Evec_ndf = as.data.frame(MEvEv_n$sf)
+    c_pred = cbind(d_pred, Evec_ndf)
+    
+    # Get first part of the formula 
+    voi = all.vars(fo_RF)[1]
+    covair = all.vars(fo_RF)[-1]
+    covair_part = paste(covair, collapse = "+")
+    fo_fp = paste(voi, covair_part, sep = "~")
+    # Create second part of the model formula and complete the formula
+    fo_sp = paste(colnames(Evec_df), collapse="+")
+    fo_c = as.formula(paste(fo_fp, fo_sp, sep="+"))
   }
   
   # End time measurement (preprocessing)
@@ -404,9 +426,9 @@ if (RF_MEv){
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Train model
-  RF_MEv_model = ranger::ranger(formula = fo_c, data = c_train, 
-                                 oob.error = FALSE, seed = 7)
+    # Train model
+    RF_MEv_model = ranger::ranger(formula = fo_c, data = c_train, 
+                                  oob.error = FALSE, seed = 7)
   }
   
   # End time measurement (train)
@@ -417,8 +439,8 @@ if (RF_MEv){
   start_time_predict = Sys.time()
   
   for (i in 1:1000){
-  # Prediction
-  RF_MEv_predi = predict(object = RF_MEv_model, data = c_pred)
+    # Prediction
+    RF_MEv_predi = predict(object = RF_MEv_model, data = c_pred)
   }
   
   # End time measurement (predict)
@@ -426,7 +448,7 @@ if (RF_MEv){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_RF_MEv_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_RF_MEv_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_pp, bygone_time_train, bygone_time_predict, 
@@ -472,11 +494,11 @@ loo_OK_fun = function(data, buffer_dist, ok_fo, nno){
                               
                               # Interpolation
                               if (nno != 0){
-                              ok_pred = gstat::krige(ok_fo, train_sp_df, 
-                                                     model = resid_vmm, 
-                                                     newdata = test_sp_df,
-                                                     debug.level = 0,
-                                                     nmax = nno)
+                                ok_pred = gstat::krige(ok_fo, train_sp_df, 
+                                                       model = resid_vmm, 
+                                                       newdata = test_sp_df,
+                                                       debug.level = 0,
+                                                       nmax = nno)
                               } else{
                                 ok_pred = gstat::krige(ok_fo, train_sp_df, 
                                                        model = resid_vmm, 
@@ -492,56 +514,65 @@ d_train_loo = d_train
 d_pred_loo = d_pred
 
 if (loo_OK_RF){
+  # Set number of repetitions for preprocessing
+  if (n_train == 500){
+    nrep = 100
+  } else if (n_train == 1000){
+    nrep = 20
+  } else {
+    nrep = 10
+  }
+  
   # Start time measurement (preprocessing)
   start_time_pp = Sys.time()
   
-  for (i in 1:10){
-  # Setup backend to use many processors
-  totalCores = parallel::detectCores()
-  
-  # Leave some cores to reduce computer load
-  cluster = parallel::makeCluster(totalCores) 
-  doParallel::registerDoParallel(cluster)
-  
-  # Execute loo-OK function
-  loo_ok_res = loo_OK_fun(data = d_train_loo, 
-                          buffer_dist = 0, 
-                          ok_fo = ok_fo,
-                          nno = 0)
-  
-  # Stop cluster
-  stopCluster(cluster)
-  
-  # Add the loo-OK results to the train df 
-  loo_ok_res_vec = unlist(loo_ok_res)
-  ok_inter_pred = loo_ok_res_vec[seq(1, length(loo_ok_res_vec), 2)]
-  ok_inter_var = loo_ok_res_vec[seq(2, length(loo_ok_res_vec), 2)]
-  d_train_loo$ok_inter_pred = ok_inter_pred
-  d_train_loo$ok_inter_var = ok_inter_var
-  
-  ## Normal OK for the prediction data
-  # Create spatial points dfs
-  sp_df_train_loo = sp::SpatialPointsDataFrame(d_train_loo[,c("X","Y")], d_train_loo)
-  sp_df_pred_loo = sp::SpatialPointsDataFrame(d_pred_loo[,c("X","Y")], d_pred_loo)
-  
-  # Fit variogram model
-  resid_vm = automap::autofitVariogram(formula = ok_fo,
-                                       input_data = sp_df_train_loo,
-                                       model = c("Mat", "Exp"),
-                                       kappa = c(seq(0.1, 0.4, 0.1)),
-                                       fix.values = c(0, NA, NA))
-  # Get the variogram model
-  resid_vmm = resid_vm["var_model"]$var_model
-  
-  # Ordinary Kriging interpolation
-  ok_pred = gstat::krige(formula = ok_fo, sp_df_train_loo, 
-                         model = resid_vmm, 
-                         newdata = sp_df_pred_loo, 
-                         debug.level = 0)
-  
-  # Add the OK results to the predcition df 
-  d_pred_loo$ok_inter_pred = ok_pred$var1.pred 
-  d_pred_loo$ok_inter_var = ok_pred$var1.var
+  for (i in 1:nrep){
+    # Setup backend to use many processors
+    totalCores = parallel::detectCores()
+    
+    # Leave some cores to reduce computer load
+    cluster = parallel::makeCluster(totalCores) 
+    doParallel::registerDoParallel(cluster)
+    
+    # Execute loo-OK function
+    loo_ok_res = loo_OK_fun(data = d_train_loo, 
+                            buffer_dist = 0, 
+                            ok_fo = ok_fo,
+                            nno = 0)
+    
+    # Stop cluster
+    stopCluster(cluster)
+    
+    # Add the loo-OK results to the train df 
+    loo_ok_res_vec = unlist(loo_ok_res)
+    ok_inter_pred = loo_ok_res_vec[seq(1, length(loo_ok_res_vec), 2)]
+    ok_inter_var = loo_ok_res_vec[seq(2, length(loo_ok_res_vec), 2)]
+    d_train_loo$ok_inter_pred = ok_inter_pred
+    d_train_loo$ok_inter_var = ok_inter_var
+    
+    ## Normal OK for the prediction data
+    # Create spatial points dfs
+    sp_df_train_loo = sp::SpatialPointsDataFrame(d_train_loo[,c("X","Y")], d_train_loo)
+    sp_df_pred_loo = sp::SpatialPointsDataFrame(d_pred_loo[,c("X","Y")], d_pred_loo)
+    
+    # Fit variogram model
+    resid_vm = automap::autofitVariogram(formula = ok_fo,
+                                         input_data = sp_df_train_loo,
+                                         model = c("Mat", "Exp"),
+                                         kappa = c(seq(0.1, 0.4, 0.1)),
+                                         fix.values = c(0, NA, NA))
+    # Get the variogram model
+    resid_vmm = resid_vm["var_model"]$var_model
+    
+    # Ordinary Kriging interpolation
+    ok_pred = gstat::krige(formula = ok_fo, sp_df_train_loo, 
+                           model = resid_vmm, 
+                           newdata = sp_df_pred_loo, 
+                           debug.level = 0)
+    
+    # Add the OK results to the predcition df 
+    d_pred_loo$ok_inter_pred = ok_pred$var1.pred 
+    d_pred_loo$ok_inter_var = ok_pred$var1.var
   }
   
   # End time measurement (preprocessing)
@@ -552,9 +583,9 @@ if (loo_OK_RF){
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Train model
-  loo_OK_RF_model = ranger::ranger(formula = loo_OK_RF_fo, data = d_train_loo, 
-                                oob.error = FALSE, seed = 7)
+    # Train model
+    loo_OK_RF_model = ranger::ranger(formula = loo_OK_RF_fo, data = d_train_loo, 
+                                     oob.error = FALSE, seed = 7)
   }
   
   # End time measurement (train)
@@ -565,8 +596,8 @@ if (loo_OK_RF){
   start_time_predict = Sys.time()
   
   for (i in 1:1000){
-  # Prediction
-  loo_OK_RF_predi = predict(object = loo_OK_RF_model, data = d_pred_loo)
+    # Prediction
+    loo_OK_RF_predi = predict(object = loo_OK_RF_model, data = d_pred_loo)
   }
   
   # End time measurement (predict)
@@ -574,7 +605,7 @@ if (loo_OK_RF){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_loo_OK_RF_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_loo_OK_RF_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_pp, bygone_time_train, bygone_time_predict, file = file_name)
@@ -588,6 +619,16 @@ if (loo_OK_RF){
 ## RF-oob-OK
 ################################################################################
 if (RF_oob_OK){
+  
+  # Set number of repetitions for prediction
+  if (n_train == 500){
+    nrep = 100
+  } else if (n_train == 1000){
+    nrep = 50
+  } else {
+    nrep = 10
+  }
+  
   # Create a copy of the train df
   d_train_oob = d_train
   
@@ -595,11 +636,11 @@ if (RF_oob_OK){
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Train model
-  RF_model = ranger::ranger(formula = fo_RF, 
-                             data = d_train_oob,
-                             oob.error = TRUE,
-                             seed = 7)
+    # Train model
+    RF_model = ranger::ranger(formula = fo_RF, 
+                              data = d_train_oob,
+                              oob.error = TRUE,
+                              seed = 7)
   }
   
   # End time measurement (train)
@@ -609,35 +650,35 @@ if (RF_oob_OK){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
-  for (i in 1:1000){
-  # RF Prediction
-  RF_predi = predict(object = RF_model, data = d_pred)
-  
-  # Calculate the oob residuals and add them to the df
-  d_train_oob$oob_resi = d_train_oob[, obs_col] - RF_model$predictions
-  
-  ## OK oob residuals interpolation
-  # Create spatial points train df
-  sp_df_train = sp::SpatialPointsDataFrame(d_train_oob[,c("X","Y")], d_train_oob)
-  sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
-  
-  # Fit variogram model
-  resid_vm = automap::autofitVariogram(formula = oob_resi ~ 1,
-                                       input_data = sp_df_train,
-                                       model = c("Mat", "Exp"),
-                                       kappa = c(seq(0.1, 0.4, 0.1)),
-                                       fix.values = c(0, NA, NA))
-  # Get the model
-  resid_vmm = resid_vm["var_model"]$var_model
-  
-  # Ordinary Kriging oob residual interpolation
-  ok_pred = gstat::krige(formula = oob_resi ~ 1, sp_df_train, 
-                         model = resid_vmm, 
-                         newdata = sp_df_pred, 
-                         debug.level = 0)
-  
-  # Sum up the residual interpolation and the RF prediction
-  final_prediction = RF_predi$predictions + ok_pred$var1.pred  
+  for (i in 1:nrep){
+    # RF Prediction
+    RF_predi = predict(object = RF_model, data = d_pred)
+    
+    # Calculate the oob residuals and add them to the df
+    d_train_oob$oob_resi = d_train_oob[, obs_col] - RF_model$predictions
+    
+    ## OK oob residuals interpolation
+    # Create spatial points train df
+    sp_df_train = sp::SpatialPointsDataFrame(d_train_oob[,c("X","Y")], d_train_oob)
+    sp_df_pred = sp::SpatialPointsDataFrame(d_pred[,c("X","Y")], d_pred)
+    
+    # Fit variogram model
+    resid_vm = automap::autofitVariogram(formula = oob_resi ~ 1,
+                                         input_data = sp_df_train,
+                                         model = c("Mat", "Exp"),
+                                         kappa = c(seq(0.1, 0.4, 0.1)),
+                                         fix.values = c(0, NA, NA))
+    # Get the model
+    resid_vmm = resid_vm["var_model"]$var_model
+    
+    # Ordinary Kriging oob residual interpolation
+    ok_pred = gstat::krige(formula = oob_resi ~ 1, sp_df_train, 
+                           model = resid_vmm, 
+                           newdata = sp_df_pred, 
+                           debug.level = 0)
+    
+    # Sum up the residual interpolation and the RF prediction
+    final_prediction = RF_predi$predictions + ok_pred$var1.pred  
   }
   
   # End time measurement (predict)
@@ -645,7 +686,7 @@ if (RF_oob_OK){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_RF_oob_OK_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_RF_oob_OK_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_train, bygone_time_predict, file = file_name)
@@ -659,31 +700,41 @@ if (RF_oob_OK){
 ## OK-RF
 ################################################################################
 if (OK_RF){
+  
+  # Set number of repetitions for prediction
+  if (n_train == 500){
+    nrep = 100
+  } else if (n_train == 1000){
+    nrep = 50
+  } else {
+    nrep = 10
+  }
+  
   # Start time measurement (train)
   start_time_train = Sys.time()
   
   for (i in 1:1000){
-  # Train RF model
-  RF_model = ranger::ranger(formula = fo_RF, 
-                            data = d_train,
-                            oob.error = FALSE,
-                            seed = 7)
-  
-  # Compute distance between the prediction data and the nearest training data point 
-  dist = rep(NA, nrow(d_pred))
-  for (i in 1:nrow(d_pred)){
-    dist[i] = min(sqrt((d_train[, "X"] - d_pred[i, "X"])^2 
-                       + (d_train[, "Y"] - d_pred[i, "Y"])^2))
-  }
-  
-  # Fit variogram model
-  resid_vm = automap::autofitVariogram(formula = ok_fo,
-                                       input_data = sp_df_train,
-                                       model = c("Mat", "Exp"),
-                                       kappa = c(seq(0.1, 0.4, 0.1)),
-                                       fix.values = c(0, NA, NA))
-  # Get the variogram model
-  resid_vmm = resid_vm["var_model"]$var_model
+    # Train RF model
+    RF_model = ranger::ranger(formula = fo_RF, 
+                              data = d_train,
+                              oob.error = FALSE,
+                              seed = 7)
+    
+    # Compute distance between the prediction data and the nearest training data point 
+    dist = rep(NA, nrow(d_pred))
+    for (i in 1:nrow(d_pred)){
+      dist[i] = min(sqrt((d_train[, "X"] - d_pred[i, "X"])^2 
+                         + (d_train[, "Y"] - d_pred[i, "Y"])^2))
+    }
+    
+    # Fit variogram model
+    resid_vm = automap::autofitVariogram(formula = ok_fo,
+                                         input_data = sp_df_train,
+                                         model = c("Mat", "Exp"),
+                                         kappa = c(seq(0.1, 0.4, 0.1)),
+                                         fix.values = c(0, NA, NA))
+    # Get the variogram model
+    resid_vmm = resid_vm["var_model"]$var_model
   }
   
   # End time measurement (train)
@@ -693,28 +744,28 @@ if (OK_RF){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
-  for (i in 1:1000){
-  # Ordinary Kriging interpolation
-  ok_pred = gstat::krige(formula = ok_fo, sp_df_train, 
-                         model = resid_vmm, 
-                         newdata = sp_df_pred, 
-                         debug.level = 0)
-  
-  # RF Prediction
-  RF_predi = predict(object = RF_model, data = d_pred)
-  
-  # Compute weights
-  weights = dist/wd
-  
-  # Replace invalid weights
-  weights[weights > 1] <- 1
-  
-  # Calculate OK-weights 
-  temp_weights = weights-1
-  OK_weights = temp_weights*-1
-  
-  # Weight predictions
-  final_prediction = OK_weights * ok_pred$var1.pred + weights * RF_predi$predictions
+  for (i in 1:nrep){
+    # Ordinary Kriging interpolation
+    ok_pred = gstat::krige(formula = ok_fo, sp_df_train, 
+                           model = resid_vmm, 
+                           newdata = sp_df_pred, 
+                           debug.level = 0)
+    
+    # RF Prediction
+    RF_predi = predict(object = RF_model, data = d_pred)
+    
+    # Compute weights
+    weights = dist/wd
+    
+    # Replace invalid weights
+    weights[weights > 1] <- 1
+    
+    # Calculate OK-weights 
+    temp_weights = weights-1
+    OK_weights = temp_weights*-1
+    
+    # Weight predictions
+    final_prediction = OK_weights * ok_pred$var1.pred + weights * RF_predi$predictions
   }
   
   # End time measurement (predict)
@@ -722,7 +773,7 @@ if (OK_RF){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_OK_RF_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_OK_RF_", as.character(n_train),
                     ".rda", sep = "")
   
   # Save result 
@@ -737,6 +788,15 @@ if (OK_RF){
 ## UK
 ################################################################################
 if (UK){
+  # Set number of repetitions for prediction
+  if (n_train == 500){
+    nrep = 100
+  } else if (n_train == 1000){
+    nrep = 50
+  } else {
+    nrep = 10
+  }
+  
   # Start time measurement (train)
   start_time_train = Sys.time()
   
@@ -759,13 +819,13 @@ if (UK){
   # Start time measurement (predict)
   start_time_predict = Sys.time()
   
-  for (i in 1:1000){
-  # UK prediction
-  uk_pred = gstat::krige(formula = fo_lm, 
-                         locations = sp_df_train,
-                         model = resid_vmm,
-                         newdata = sp_df_pred,
-                         debug.level = 0)
+  for (i in 1:nrep){
+    # UK prediction
+    uk_pred = gstat::krige(formula = fo_lm, 
+                           locations = sp_df_train,
+                           model = resid_vmm,
+                           newdata = sp_df_pred,
+                           debug.level = 0)
   }
   
   # End time measurement (predict)
@@ -773,7 +833,7 @@ if (UK){
   bygone_time_predict = end_time_predict - start_time_predict
   
   # Set file name 
-  file_name = paste("Results/", data_set, "_CT_UK_", as.character(n_total),
+  file_name = paste("Results/", data_set, "_CT_UK_", as.character(n_train),
                     ".rda", sep = "")
   # Save result 
   save(bygone_time_train, bygone_time_predict, file = file_name)
@@ -822,17 +882,6 @@ OK_RF_predi = c()
 RFSI_predi = c()
 UK_predi = c()
 
-RF_comp = c()
-bRF_comp = c()
-loo_OK_RF_comp = c()
-RF_MEv_comp = c()
-RF_GLS_comp = c()
-RF_oob_OK_comp = c()
-MLR_comp = c()
-OK_RF_comp = c() 
-RFSI_comp = c()
-UK_comp = c()
-
 # Vector of the first part of the file names
 f_names_vec1 = c("WuS_SuB_CT_bRF", "WuS_SuB_CT_UK", "WuS_SuB_CT_MLR", 
                  "WuS_SuB_CT_RF", "WuS_SuB_CT_RF_GLS", "WuS_SuB_CT_OK_RF", 
@@ -851,77 +900,93 @@ for (i1 in f_names_vec1){
     load(f_name)
     # bRF
     if (i1 == "WuS_SuB_CT_bRF"){
-      bRF_train = append(bRF_train, bygone_time_train)
-      bRF_predi = append(bRF_predi, bygone_time_predict)
-      bRF_comp = append(bRF_comp, bygone_time_train + bygone_time_predict)
-    # RF
+      bRF_train = append(bRF_train/1000, bygone_time_train)
+      bRF_predi = append(bRF_predi/1000, bygone_time_predict)
+      # RF
     } else if (i1 == "WuS_SuB_CT_RF"){
-      RF_train = append(RF_train, bygone_time_train)
-      RF_predi = append(RF_predi, bygone_time_predict)
-      RF_comp = append(RF_comp, bygone_time_train + bygone_time_predict)
+      RF_train = append(RF_train/1000, bygone_time_train)
+      RF_predi = append(RF_predi/1000, bygone_time_predict)
       # MLR
     } else if (i1 == "WuS_SuB_CT_MLR"){
-      MLR_train = append(MLR_train, bygone_time_train)
-      MLR_predi = append(MLR_predi, bygone_time_predict)
-      MLR_comp = append(MLR_comp, bygone_time_train + bygone_time_predict)
+      MLR_train = append(MLR_train/1000, bygone_time_train)
+      MLR_predi = append(MLR_predi/1000, bygone_time_predict)
       # RF_oob_OK
     } else if (i1 == "WuS_SuB_CT_RF_oob_OK"){
-      RF_oob_OK_train = append(RF_oob_OK_train, bygone_time_train)
-      RF_oob_OK_predi = append(RF_oob_OK_predi, bygone_time_predict)
-      RF_oob_OK_comp = append(RF_oob_OK_comp, bygone_time_train + 
-                                bygone_time_predict)
+      if (i2 == "_500.rda"){
+        divi = 100
+      } else if (i2 == "_1000.rda"){
+        divi = 50
+      } else {
+        divi = 10
+      }
+      RF_oob_OK_train = append(RF_oob_OK_train/1000, bygone_time_train)
+      RF_oob_OK_predi = append(RF_oob_OK_predi/divi, bygone_time_predict)
       # OK_RF
     } else if (i1 == "WuS_SuB_CT_OK_RF"){
-      OK_RF_train = append(OK_RF_train, bygone_time_train)
-      OK_RF_predi = append(OK_RF_predi, bygone_time_predict)
-      OK_RF_comp = append(OK_RF_comp, bygone_time_train + bygone_time_predict)
+      if (i2 == "_500.rda"){
+        divi = 100
+      } else if (i2 == "_1000.rda"){
+        divi = 50
+      } else {
+        divi = 10
+      }
+      OK_RF_train = append(OK_RF_train/1000, bygone_time_train)
+      OK_RF_predi = append(OK_RF_predi/divi, bygone_time_predict)
       # RF_GLS
     } else if (i1 == "WuS_SuB_CT_RF_GLS"){
-      RF_GLS_train = append(RF_GLS_train, bygone_time_train*100)
-      RF_GLS_predi = append(RF_GLS_predi, bygone_time_predict)
-      RF_GLS_comp = append(RF_GLS_comp, bygone_time_train*100 + bygone_time_predict)
+      if (i2 == "_500.rda"){
+        divi = 20
+      } else if (i2 == "_1000.rda"){
+        divi = 2
+      } else {
+        divi = 1
+      }
+      RF_GLS_train = append(RF_GLS_train/divi, bygone_time_train)
+      RF_GLS_predi = append(RF_GLS_predi/1000, bygone_time_predict)
       # RFSI
     } else if (i1 == "WuS_SuB_CT_RFSI"){
-      RFSI_train = append(RFSI_train, bygone_time_train)
-      RFSI_predi = append(RFSI_predi, bygone_time_predict)
-      RFSI_comp = append(RFSI_comp, bygone_time_train + bygone_time_predict)
+      RFSI_train = append(RFSI_train/1000, bygone_time_train)
+      RFSI_predi = append(RFSI_predi/1000, bygone_time_predict)
       # UK
     } else if (i1 == "WuS_SuB_CT_UK"){
-      UK_train = append(UK_train, bygone_time_train)
-      UK_predi = append(UK_predi, bygone_time_predict)
-      UK_comp = append(UK_comp, bygone_time_train + bygone_time_predict)
+      if (i2 == "_500.rda"){
+        divi = 100
+      } else if (i2 == "_1000.rda"){
+        divi = 50
+      } else {
+        divi = 10
+      }
+      UK_train = append(UK_train/1000, bygone_time_train)
+      UK_predi = append(UK_predi/divi, bygone_time_predict)
       # RF_MEv
     } else if (i1 == "WuS_SuB_CT_RF_MEv"){
-      RF_MEv_train = append(RF_MEv_train, bygone_time_train)
-      RF_MEv_predi = append(RF_MEv_predi, bygone_time_predict)
-      RF_MEv_pre_pro = append(RF_MEv_pre_pro, bygone_time_pp)
-      RF_MEv_comp = append(RF_MEv_comp, bygone_time_train + 
-                             bygone_time_predict + 
-                             bygone_time_pp)
+      if (i2 == "_500.rda"){
+        divi = 1000
+      } else if (i2 == "_1000.rda"){
+        divi = 500
+      } else {
+        divi = 100
+      }
+      RF_MEv_train = append(RF_MEv_train/1000, bygone_time_train)
+      RF_MEv_predi = append(RF_MEv_predi/1000, bygone_time_predict)
+      RF_MEv_pre_pro = append(RF_MEv_pre_pro/divi, bygone_time_pp)
       # loo_OK_RF
     } else if (i1 == "WuS_SuB_CT_loo_OK_RF"){
-      loo_OK_RF_train = append(loo_OK_RF_train, bygone_time_train)
-      loo_OK_RF_predi = append(loo_OK_RF_predi, bygone_time_predict)
-      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro, bygone_time_pp*100)
-      loo_OK_RF_comp = append(loo_OK_RF_comp, bygone_time_train + 
-                                bygone_time_predict + 
-                                bygone_time_pp*100)
+      if (i2 == "_500.rda"){
+        divi = 100
+      } else if (i2 == "_1000.rda"){
+        divi = 20
+      } else {
+        divi = 10
+      }
+      loo_OK_RF_train = append(loo_OK_RF_train/1000, bygone_time_train)
+      loo_OK_RF_predi = append(loo_OK_RF_predi/1000, bygone_time_predict)
+      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro/divi, bygone_time_pp)
     }
   }
 }
 
 # Create data frames 
-CT_df_comp = data.frame(loo_OK_RF_comp,
-                           RF_MEv_comp,
-                           RF_comp,
-                           bRF_comp,
-                           RF_GLS_comp,
-                           RF_oob_OK_comp,
-                           MLR_comp,
-                           OK_RF_comp,
-                           RFSI_comp,
-                           UK_comp)
-
 CT_df_pre_pro = data.frame(loo_OK_RF_pre_pro,
                            RF_MEv_pre_pro,
                            RF_pre_pro,
@@ -934,26 +999,28 @@ CT_df_pre_pro = data.frame(loo_OK_RF_pre_pro,
                            UK_pre_pro)
 
 CT_df_train = data.frame(loo_OK_RF_train,
-                           RF_MEv_train,
-                           RF_train,
-                           bRF_train,
-                           RF_GLS_train,
-                           RF_oob_OK_train,
-                           MLR_train,
-                           OK_RF_train,
-                           RFSI_train,
-                           UK_train)
+                         RF_MEv_train,
+                         RF_train,
+                         bRF_train,
+                         RF_GLS_train,
+                         RF_oob_OK_train,
+                         MLR_train,
+                         OK_RF_train,
+                         RFSI_train,
+                         UK_train)
 
 CT_df_predi = data.frame(loo_OK_RF_predi,
-                           RF_MEv_predi,
-                           RF_predi,
-                           bRF_predi,
-                           RF_GLS_predi,
-                           RF_oob_OK_predi,
-                           MLR_predi,
-                           OK_RF_predi,
-                           RFSI_predi,
-                           UK_predi)
+                         RF_MEv_predi,
+                         RF_predi,
+                         bRF_predi,
+                         RF_GLS_predi,
+                         RF_oob_OK_predi,
+                         MLR_predi,
+                         OK_RF_predi,
+                         RFSI_predi,
+                         UK_predi)
+
+CT_df_comp = CT_df_pre_pro + CT_df_train + CT_df_predi
 ################################################################################
 ## End (post processing of the results)
 ################################################################################

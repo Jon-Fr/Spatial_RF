@@ -900,16 +900,16 @@ for (i1 in f_names_vec1){
     load(f_name)
     # bRF
     if (i1 == "WuS_SuB_CT_bRF"){
-      bRF_train = append(bRF_train/1000, bygone_time_train)
-      bRF_predi = append(bRF_predi/1000, bygone_time_predict)
+      bRF_train = append(bRF_train, bygone_time_train/1000)
+      bRF_predi = append(bRF_predi, bygone_time_predict/1000)
       # RF
     } else if (i1 == "WuS_SuB_CT_RF"){
-      RF_train = append(RF_train/1000, bygone_time_train)
-      RF_predi = append(RF_predi/1000, bygone_time_predict)
+      RF_train = append(RF_train, bygone_time_train/1000)
+      RF_predi = append(RF_predi, bygone_time_predict/1000)
       # MLR
     } else if (i1 == "WuS_SuB_CT_MLR"){
-      MLR_train = append(MLR_train/1000, bygone_time_train)
-      MLR_predi = append(MLR_predi/1000, bygone_time_predict)
+      MLR_train = append(MLR_train, bygone_time_train/1000)
+      MLR_predi = append(MLR_predi, bygone_time_predict/1000)
       # RF_oob_OK
     } else if (i1 == "WuS_SuB_CT_RF_oob_OK"){
       if (i2 == "_500.rda"){
@@ -919,8 +919,8 @@ for (i1 in f_names_vec1){
       } else {
         divi = 10
       }
-      RF_oob_OK_train = append(RF_oob_OK_train/1000, bygone_time_train)
-      RF_oob_OK_predi = append(RF_oob_OK_predi/divi, bygone_time_predict)
+      RF_oob_OK_train = append(RF_oob_OK_train, bygone_time_train/1000)
+      RF_oob_OK_predi = append(RF_oob_OK_predi, bygone_time_predict/divi)
       # OK_RF
     } else if (i1 == "WuS_SuB_CT_OK_RF"){
       if (i2 == "_500.rda"){
@@ -930,8 +930,8 @@ for (i1 in f_names_vec1){
       } else {
         divi = 10
       }
-      OK_RF_train = append(OK_RF_train/1000, bygone_time_train)
-      OK_RF_predi = append(OK_RF_predi/divi, bygone_time_predict)
+      OK_RF_train = append(OK_RF_train, bygone_time_train/1000)
+      OK_RF_predi = append(OK_RF_predi, bygone_time_predict/divi)
       # RF_GLS
     } else if (i1 == "WuS_SuB_CT_RF_GLS"){
       if (i2 == "_500.rda"){
@@ -941,12 +941,12 @@ for (i1 in f_names_vec1){
       } else {
         divi = 1
       }
-      RF_GLS_train = append(RF_GLS_train/divi, bygone_time_train)
-      RF_GLS_predi = append(RF_GLS_predi/1000, bygone_time_predict)
+      RF_GLS_train = append(RF_GLS_train, bygone_time_train/divi)
+      RF_GLS_predi = append(RF_GLS_predi, bygone_time_predict/1000)
       # RFSI
     } else if (i1 == "WuS_SuB_CT_RFSI"){
-      RFSI_train = append(RFSI_train/1000, bygone_time_train)
-      RFSI_predi = append(RFSI_predi/1000, bygone_time_predict)
+      RFSI_train = append(RFSI_train, bygone_time_train/1000)
+      RFSI_predi = append(RFSI_predi, bygone_time_predict/1000)
       # UK
     } else if (i1 == "WuS_SuB_CT_UK"){
       if (i2 == "_500.rda"){
@@ -956,8 +956,8 @@ for (i1 in f_names_vec1){
       } else {
         divi = 10
       }
-      UK_train = append(UK_train/1000, bygone_time_train)
-      UK_predi = append(UK_predi/divi, bygone_time_predict)
+      UK_train = append(UK_train, bygone_time_train/1000)
+      UK_predi = append(UK_predi, bygone_time_predict/divi)
       # RF_MEv
     } else if (i1 == "WuS_SuB_CT_RF_MEv"){
       if (i2 == "_500.rda"){
@@ -967,9 +967,9 @@ for (i1 in f_names_vec1){
       } else {
         divi = 100
       }
-      RF_MEv_train = append(RF_MEv_train/1000, bygone_time_train)
-      RF_MEv_predi = append(RF_MEv_predi/1000, bygone_time_predict)
-      RF_MEv_pre_pro = append(RF_MEv_pre_pro/divi, bygone_time_pp)
+      RF_MEv_train = append(RF_MEv_train, bygone_time_train/1000)
+      RF_MEv_predi = append(RF_MEv_predi, bygone_time_predict/1000)
+      RF_MEv_pre_pro = append(RF_MEv_pre_pro, bygone_time_pp/divi)
       # loo_OK_RF
     } else if (i1 == "WuS_SuB_CT_loo_OK_RF"){
       if (i2 == "_500.rda"){
@@ -979,9 +979,9 @@ for (i1 in f_names_vec1){
       } else {
         divi = 10
       }
-      loo_OK_RF_train = append(loo_OK_RF_train/1000, bygone_time_train)
-      loo_OK_RF_predi = append(loo_OK_RF_predi/1000, bygone_time_predict)
-      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro/divi, bygone_time_pp)
+      loo_OK_RF_train = append(loo_OK_RF_train, bygone_time_train/1000)
+      loo_OK_RF_predi = append(loo_OK_RF_predi, bygone_time_predict/1000)
+      loo_OK_RF_pre_pro = append(loo_OK_RF_pre_pro, bygone_time_pp/divi)
     }
   }
 }
@@ -1021,6 +1021,9 @@ CT_df_predi = data.frame(loo_OK_RF_predi,
                          UK_predi)
 
 CT_df_comp = CT_df_pre_pro + CT_df_train + CT_df_predi
+
+# Fewer decimal places, apply penalty on exponential notation 
+options("scipen"= 999, "digits"=4)
 ################################################################################
 ## End (post processing of the results)
 ################################################################################

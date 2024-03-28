@@ -11,7 +11,8 @@ p_load("automap")
 p_load("terra")
 
 # For run as background job
-NuM_L_pm = FALSE
+Base_m = TRUE
+NuM_L_pm = TRUE
 WuS_SuB_pm = TRUE
 
 # Observation column
@@ -20,6 +21,17 @@ obs_col = "subMittelwert"
 # Load training data 
 load("Data/NuM_L.rda")
 load("Data/WuS_SuB.rda")
+
+fo_RF_NuM_L_base = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                                nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                                agrum_log10_gwn + agrum_log10_geschw + Ackerland + lbm_class_Gruenland + 
+                                lbm_class_Unbewachsen + lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                                aea20_2 + aea20_8 + aea20_12)
+fo_RF_WuS_SuB_base = as.formula(subMittelwert ~ crestime + cgwn + cgeschw + log10carea + elevation + 
+                                  nfk + humus + cAckerland + log10_gwn + agrum_log10_restime + 
+                                  agrum_log10_gwn + agrum_log10_geschw + Ackerland + lbm_class_Gruenland + 
+                                  lbm_class_Unbewachsen + lbm_class_FeuchtgebieteWasser + lbm_class_Siedlung + 
+                                  aea20_1 + aea20_2 + aea20_12 + aea20_13)
 
 ####
 ## Manage prediction data 
@@ -144,6 +156,26 @@ WuS_SuB_NaN_removed_p = (WuS_SuB_NaN_removed/WuS_SuB_pred_n0) * 100
 ################################################################################
 ## Prediction 
 ################################################################################
+## Base RF
+# Create model function 
+RF_base_fun = function(formula, data){
+  RF_model = ranger::ranger(formula = formula, 
+                            data = data,
+                            oob.error = FALSE,
+                            seed = 7)
+  return(RF_model)
+}
+
+# Create prediction function
+RF_pred_base_fun = function(object, newdata){
+  RF_prediction = predict(object = object,
+                          data = newdata)
+  # Add the RF predictions to the df
+  newdata$RF_predictions = RF_prediction$predictions
+  return(newdata)
+}
+
+## RF-oob-OK
 # Create model function 
 RF_fun = function(formula, data, obs_col){
   # Create RF model
@@ -162,8 +194,8 @@ RF_oob_OK_pred_fun = function(object, newdata){
   # Make the RF prediction
   RF_prediction = predict(object = object$model,
                           data = newdata)
-  # Add the RF prediction to the df
-  newdata$RF_predictions = RF_prediction$predictions
+  # Add the RF predictions to the df
+  newdata$RF_prediction = RF_prediction$predictions
   # Get training data
   train_data = object$train_data
   # Create spatial points dfs
@@ -188,6 +220,28 @@ RF_oob_OK_pred_fun = function(object, newdata){
   newdata_sp_df$final_prediction = newdata_sp_df$RF_predictions + 
     ok_pred$var1.pred  
   return(newdata_sp_df)
+}
+
+if (NuM_L_pm & Base_m){
+  ## NuM_L
+  # Model
+  NuM_L_RF_model = RF_base_fun(data = NuM_L, formula = fo_RF_NuM_L_base)
+  # Prediction
+  NuM_L_pred_sp_df = RF_pred_base_fun(object = NuM_L_RF_model, 
+                                        newdata = NuM_L_pred)
+  # Save result
+  saveRDS(NuM_L_pred_sp_df, file = "Results/NuM_L_base_preds_for_pred_map.rds")
+}
+
+if (WuS_SuB_pm & Base_m){
+  ## WuS_SuB
+  # Model
+  WuS_SuB_RF_model = RF_base_fun(data = WuS_SuB, formula = fo_RF_WuS_SuB_base)
+  # Prediction
+  WuS_SuB_pred_sp_df = RF_pred_base_fun(object = WuS_SuB_RF_model, 
+                                       newdata = WuS_SuB_pred)
+  # Save result
+  saveRDS(WuS_SuB_pred_sp_df, file = "Results/WuS_SuB_base_preds_for_pred_map.rds")
 }
 
 if (NuM_L_pm){
@@ -278,4 +332,73 @@ all_p95 = quantile(x = temp, probs = c(0.95))
 
 ################################################################################
 ## End (post processing)
+################################################################################
+
+################################################################################
+## Post processing (base)
+################################################################################
+# Load data
+NuM_L_pred_df = readRDS("Results/orgNitrate/NuM_L_base_preds_for_pred_map.rds")
+WuS_SuB_pred_df = readRDS("Results/orgNitrate/WuS_SuB_base_preds_for_pred_map.rds")
+
+# Df to sp_df
+NuM_L_pred_sp_df = sp::SpatialPointsDataFrame(NuM_L_pred_df[,c("X","Y")], NuM_L_pred_df)
+WuS_SuB_pred_sp_df = sp::SpatialPointsDataFrame(WuS_SuB_pred_df[,c("X","Y")], WuS_SuB_pred_df)
+
+## NuM_L
+# Remove unnecessary columns
+NuM_L_pred_sp_df = NuM_L_pred_sp_df[, c("RF_predictions")]
+
+# Sp df to spatial pixels df
+NuM_L_spx_df = SpatialPixelsDataFrame(points = NuM_L_pred_sp_df, data = NuM_L_pred_sp_df@data)
+
+# Spatial pixels df to raster
+NuM_L_predciton_raster = terra::rast(NuM_L_spx_df)
+
+# Check result
+NuM_L_predciton_raster["RF_predictions"]
+summary(NuM_L_predciton_raster["RF_predictions"], size = nrow(NuM_L_pred_sp_df))
+plot(NuM_L_predciton_raster["RF_predictions"])
+
+# Get the percentage of raster cells with values of and above 50 mg/l
+NuM_L_pred_sp_df$a50 = NuM_L_pred_sp_df$RF_predictions
+NuM_L_pred_sp_df$a50[NuM_L_pred_sp_df$a50 < 50] <- 0
+NuM_L_pred_sp_df$a50[NuM_L_pred_sp_df$a50 >= 50] <- 1
+NuM_L_pred_a50_table = table(NuM_L_pred_sp_df$a50)
+NuM_L_pred_a50_table[2]/(NuM_L_pred_a50_table[2]+NuM_L_pred_a50_table[1])
+
+# Save the prediction raster 
+terra::writeRaster(NuM_L_predciton_raster, filename = "Results/NuM_L_base_predciton_raster.tif")
+
+## WuS_SuB
+# Remove unnecessary columns
+WuS_SuB_pred_sp_df = WuS_SuB_pred_sp_df[, c("RF_predictions")]
+
+# Sp df to spatial pixels df
+WuS_SuB_spx_df = SpatialPixelsDataFrame(points = WuS_SuB_pred_sp_df, data = WuS_SuB_pred_sp_df@data)
+
+# Spatial pixels df to raster
+WuS_SuB_predciton_raster = terra::rast(WuS_SuB_spx_df)
+
+# Check result
+WuS_SuB_predciton_raster["RF_predictions"]
+summary(WuS_SuB_predciton_raster["RF_predictions"], size = nrow(WuS_SuB_pred_sp_df))
+plot(WuS_SuB_predciton_raster["RF_predictions"])
+
+# Get the percentage of raster cells with values of and above 50 mg/l
+WuS_SuB_pred_sp_df$a50 = WuS_SuB_pred_sp_df$RF_predictions
+WuS_SuB_pred_sp_df$a50[WuS_SuB_pred_sp_df$a50 < 50] <- 0
+WuS_SuB_pred_sp_df$a50[WuS_SuB_pred_sp_df$a50 >= 50] <- 1
+WuS_SuB_pred_a50_table = table(WuS_SuB_pred_sp_df$a50)
+WuS_SuB_pred_a50_table[2]/(WuS_SuB_pred_a50_table[2]+WuS_SuB_pred_a50_table[1])
+
+# Save the prediction raster 
+terra::writeRaster(WuS_SuB_predciton_raster, filename = "Results/WuS_SuB_base_predciton_raster.tif")
+
+## Calculate 95 quantile of all predicted values
+temp = append(NuM_L_pred_sp_df$RF_predictions, WuS_SuB_pred_sp_df$RF_predictions)
+all_p95 = quantile(x = temp, probs = c(0.95))
+
+################################################################################
+## End (post processing (base))
 ################################################################################

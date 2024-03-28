@@ -1,0 +1,12 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>RF_predictions</Description>
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">205.9008026123</MDI>
+      <MDI key="STATISTICS_MEAN">29.182313083651</MDI>
+      <MDI key="STATISTICS_MINIMUM">0.71004194021225</MDI>
+      <MDI key="STATISTICS_STDDEV">16.972973028458</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">40.17</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>

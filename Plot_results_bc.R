@@ -33,7 +33,7 @@ mtext(expression("Anzahl an Datenpunkten"),
 
 # Second plot
 par(mar = c(4, 0, 1, 0)) # bottom, left, top, right margins
-plot(NuM_L_hist_sm, xlab = "Nitratkonzentration [mg/l]", ylab = "", 
+plot(NuM_L_hist_sm, xlab = "Nitratkonzentration [mg/L]", ylab = "", 
      main = "", xaxt = "n", yaxt = "n", xlim = c(0, 600), ylim = c(0, 2000))
 axis(1, at = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550),
      labels = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550), cex.axis = 1)
@@ -80,7 +80,7 @@ mtext(expression("Anzahl an Datenpunkten"),
 
 # Second plot
 par(mar = c(4, 0, 1, 0)) # bottom, left, top, right margins
-plot(WuS_SuB_hist_sm, xlab = "Nitratkonzentration [mg/l]", ylab = "", 
+plot(WuS_SuB_hist_sm, xlab = "Nitratkonzentration [mg/L]", ylab = "", 
      main = "", xaxt = "n", yaxt = "n", xlim = c(0, 300), ylim = c(0, 750))
 axis(1, at = c(0, 50, 100, 150, 200, 250, 300),
      labels = c(0, 50, 100, 150, 200, 250, 300), cex.axis = 1)
@@ -117,7 +117,7 @@ mtext(expression("Anzahl an Datenpunkten"),
 
 # Second plot
 par(mar = c(4, 0, 1, 0)) # bottom, left, top, right margins
-plot(NuM_L_hist_sm, xlab = "Nitratkonzentration [mg/l]", ylab = "", 
+plot(NuM_L_hist_sm, xlab = "Nitratkonzentration [mg/L]", ylab = "", 
      main = "", xaxt = "n", yaxt = "n", xlim = c(0, 600), ylim = c(0, 2000))
 axis(1, at = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550),
      labels = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550), cex.axis = 1)
@@ -140,7 +140,7 @@ legend(x = "topright" , legend = c("b)"), bty = "n", cex = 1.25)
 
 # Fourth plot
 par(mar = c(4, 0, 1, 0)) # bottom, left, top, right margins
-plot(WuS_SuB_hist_sm, xlab = "Nitratkonzentration [mg/l]", ylab = "", 
+plot(WuS_SuB_hist_sm, xlab = "Nitratkonzentration [mg/L]", ylab = "", 
      main = "", xaxt = "n", yaxt = "n", xlim = c(0, 300), ylim = c(0, 750))
 axis(1, at = c(0, 50, 100, 150, 200, 250, 300),
      labels = c(0, 50, 100, 150, 200, 250, 300), cex.axis = 1)
@@ -461,7 +461,11 @@ WuS_SuB_mBias_df_bc = data.frame(WuS_SuB_UK_b, WuS_SuB_RF_oob_OK_b, WuS_SuB_loo_
 # Save dfs
 #save(NuM_L_mBias_df_bc, WuS_SuB_mBias_df_bc, file = "mBias_dfs_bc.rda")
 
+(NuM_L_mRMSE_df_bc$NuM_L_OK_RF - NuM_L_mRMSE_df_bc$NuM_L_RF) / NuM_L_mRMSE_df_bc$NuM_L_RF *100
+(WuS_SuB_mRMSE_df_bc$WuS_SuB_OK_RF - WuS_SuB_mRMSE_df_bc$WuS_SuB_RF) / WuS_SuB_mRMSE_df_bc$WuS_SuB_RF *100
 
+(NuM_L_mRMSE_df_bc$NuM_L_RF - NuM_L_mRMSE_df_bc$NuM_L_bRF) / NuM_L_mRMSE_df_bc$NuM_L_bRF *100
+(WuS_SuB_mRMSE_df_bc$WuS_SuB_RF - WuS_SuB_mRMSE_df_bc$WuS_SuB_bRF) / WuS_SuB_mRMSE_df_bc$WuS_SuB_bRF *100
 
 
 # Create color vector 

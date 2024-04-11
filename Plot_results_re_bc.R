@@ -452,6 +452,7 @@ for (i in 1:length(WuS_SuB_obs)){
 load("Results/bcNitrateRe/mRMSE_dfs_org.rda")
 load("Results/bcNitrateRe/mBias_dfs_org.rda")
 load("Results/bcNitrateRe/mBias_dfs_bc.rda")
+# Multipilcation with -1 makes the interpreation easier 
 WuS_SuB_mBias_df = WuS_SuB_mBias_df * -1
 WuS_SuB_mBias_df_bc = WuS_SuB_mBias_df_bc * -1
 NuM_L_mBias_df = NuM_L_mBias_df * -1
@@ -703,7 +704,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/l]",
+     ylab = "Mittlerer Bias [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-25, 20),
@@ -772,7 +773,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/l]",
+     ylab = "Mittlerer Bias [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-25, 20),
@@ -822,7 +823,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/l]",
+     ylab = "Mittlerer Bias [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-5, 4),

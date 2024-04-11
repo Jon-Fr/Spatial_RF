@@ -16,13 +16,13 @@ options("scipen"= 999, "digits"=4)
 load("Data/WuS_SuB.rda")
 load("Data/NuM_L.rda")
 
-#N = NuM_L
-#W = WuS_SuB
+# N = NuM_L
+# W = WuS_SuB
 
 ## Get information about the prediction distance and plot histograms
 pd_df_N = info_d_NuM_L$predDist_df
-# Part of the Area below range value of variogram model
-br_vec_N = pd_df_N[pd_df_N$lyr.1 <3928, ]
+# Part of the Area below x
+br_vec_N = pd_df_N[pd_df_N$lyr.1 <3650, ]
 pbr_N = length(br_vec_N)/nrow(pd_df_N)
 
 first_quartile_N = quantile(x = pd_df_N$lyr.1, probs = c(0.25))
@@ -35,8 +35,8 @@ hist_N = hist(pd_df_N$lyr.1, breaks = (135))
 color_N = ifelse(hist_N$breaks <=first_quartile_N, "white", ifelse(hist_N$breaks <=med_pd_N & hist_N$breaks > first_quartile_N, "snow3", ifelse(hist_N$breaks <=third_quartile_N & hist_N$breaks > med_pd_N, "gray57", "#333333")))
 
 pd_df_W = info_d_WuS_SuB$predDist_df
-# Part of the Area below range value of variogram model
-br_vec_W = pd_df_W[pd_df_W$lyr.1 <26976, ]
+# Part of the Area below x
+br_vec_W = pd_df_W[pd_df_W$lyr.1 <1650, ]
 pbr_W = length(br_vec_W)/nrow(pd_df_W)
 
 first_quartile_W = quantile(x = pd_df_W$lyr.1, probs = c(0.25))
@@ -183,17 +183,17 @@ emp_svario_resi_N = gstat::variogram(mlr_resi~1, data=sp_df_N, cutoff = 50000,
                                    width = 100) 
 plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma, ylim = c(0, 5000))
 
-emp_svario_resi_N = gstat::variogram(mlr_resi_bc~1, data=sp_df_N, cutoff = 50000, 
-                                     width = 100)
-plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma)
+#emp_svario_resi_N = gstat::variogram(mlr_resi_bc~1, data=sp_df_N, cutoff = 50000, 
+#                                     width = 100)
+#plot(emp_svario_resi_N$dist, emp_svario_resi_N$gamma)
 
 emp_svario_resi_W = gstat::variogram(mlr_resi~1, data=sp_df_W, cutoff = 50000, 
                                      width = 100) 
 plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, ylim = c(0, 400))
 
-emp_svario_resi_W = gstat::variogram(mlr_resi_bc~1, data=sp_df_W, cutoff = 50000, 
-                                     width = 10)
-plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, ylim = c(0, 10))
+#emp_svario_resi_W = gstat::variogram(mlr_resi_bc~1, data=sp_df_W, cutoff = 50000, 
+#                                     width = 10)
+#plot(emp_svario_resi_W$dist, emp_svario_resi_W$gamma, ylim = c(0, 10))
 
 
 # Fit variogram model
@@ -273,8 +273,8 @@ emp_svario_resi_N_n = gstat::variogram(mlr_resi~1, data=sp_df_N, cutoff = 50000,
 emp_svario_resi_W_n = gstat::variogram(mlr_resi~1, data=sp_df_W, cutoff = 50000, 
                                      width = 100) 
 
-vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist = 11000)
-vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 11000)
+vm_points_N = gstat::variogramLine(resid_vmf_N["var_model"]$var_model, maxdist = 1000)
+vm_points_W = gstat::variogramLine(resid_vmf_W["var_model"]$var_model, maxdist = 1000)
 vm_points_N = dplyr::add_row( vm_points_N, dist = 0, gamma = 0, .before = 1)
 vm_points_W = dplyr::add_row(vm_points_W, dist = 0, gamma = 0, .before = 1)
 

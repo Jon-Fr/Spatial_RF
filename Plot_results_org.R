@@ -437,6 +437,8 @@ WuS_SuB_mRMSE_df = data.frame(WuS_SuB_UK, WuS_SuB_RF_oob_OK, WuS_SuB_loo_OK_RF,
                             WuS_SuB_RF_MEv, WuS_SuB_RFSI, WuS_SuB_RF, WuS_SuB_bRF,
                             WuS_SuB_MLR, WuS_SuB_OK_RF)
 
+# Positive bias = prediction value to low; negative bias prediction value to high
+# a multiplication with -1 can make the interpretation easier 
 NuM_L_mBias_df = data.frame(NuM_L_UK_b, NuM_L_RF_oob_OK_b, NuM_L_loo_OK_RF_b, 
                             NuM_L_RF_MEv_b, NuM_L_RFSI_b, NuM_L_RF_b, NuM_L_bRF_b,
                             NuM_L_MLR_b, NuM_L_OK_RF_b)
@@ -449,8 +451,15 @@ WuS_SuB_mBias_df = data.frame(WuS_SuB_UK_b, WuS_SuB_RF_oob_OK_b, WuS_SuB_loo_OK_
 #save(NuM_L_mRMSE_df, WuS_SuB_mRMSE_df, file = "mRMSE_dfs_org.rda")
 #save(NuM_L_mBias_df, WuS_SuB_mBias_df, file = "mBias_dfs_org.rda")
 
+(NuM_L_mRMSE_df$NuM_L_RF_oob_OK - NuM_L_mRMSE_df$NuM_L_bRF) / NuM_L_mRMSE_df$NuM_L_bRF *100
+(WuS_SuB_mRMSE_df$WuS_SuB_RF_oob_OK - WuS_SuB_mRMSE_df$WuS_SuB_bRF) / WuS_SuB_mRMSE_df$WuS_SuB_bRF *100
 
+NmBdf = NuM_L_mBias_df*-1
+NmBdf - NmBdf$NuM_L_bRF_b
 
+aNmBdf = abs(NmBdf) 
+aNmBdf - aNmBdf$NuM_L_RF_b
+  
 # Create color vector 
 col_vec = c("#666666", "#9900FF", "#0000FF", "#FF0000", "#FF9933", "#33CC33",
             "#CCCCCC", "#000000", "#66FFFF")
@@ -1232,6 +1241,8 @@ WuS_SuB_tc315_df = data.frame(WuS_SuB_tc315_RFSI_vec,
                            WuS_SuB_tc315_RF_oob_OK_vec, 
                            WuS_SuB_tc315_RF_vec)
 
+(NuM_L_cA_df - NuM_L_cA_df$NuM_L_cA_bRF_vec) /NuM_L_cA_df$NuM_L_cA_bRF_vec *100
+(WuS_SuB_cA_df - WuS_SuB_cA_df$WuS_SuB_cA_bRF_vec) /WuS_SuB_cA_df$WuS_SuB_cA_bRF_vec *100
 
 # Colors vector
 col_vec = c("#000000", "#CCCCCC", "#FF9933", "#FF0000", "#66FFFF", "#0000FF", 

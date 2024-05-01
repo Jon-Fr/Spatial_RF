@@ -455,10 +455,16 @@ WuS_SuB_mBias_df = data.frame(WuS_SuB_UK_b, WuS_SuB_RF_oob_OK_b, WuS_SuB_loo_OK_
 (WuS_SuB_mRMSE_df$WuS_SuB_RF_oob_OK - WuS_SuB_mRMSE_df$WuS_SuB_bRF) / WuS_SuB_mRMSE_df$WuS_SuB_bRF *100
 
 NmBdf = NuM_L_mBias_df*-1
-NmBdf - NmBdf$NuM_L_bRF_b
+NmBdf
 
 aNmBdf = abs(NmBdf) 
-aNmBdf - aNmBdf$NuM_L_RF_b
+(aNmBdf - aNmBdf$NuM_L_bRF_b) / aNmBdf$NuM_L_bRF_b * 100
+
+WmBdf = WuS_SuB_mBias_df*-1
+WmBdf
+
+aWmBdf = abs(WmBdf) 
+(aWmBdf - aWmBdf$WuS_SuB_bRF_b) / aWmBdf$WuS_SuB_bRF_b * 100
   
 # Create color vector 
 col_vec = c("#666666", "#9900FF", "#0000FF", "#FF0000", "#FF9933", "#33CC33",
@@ -522,7 +528,7 @@ legend(x = "bottomleft" , legend = c("a)"), bty = "n", cex = 1.25)
 par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      #ylab = "Mittlerer RMSE",
      xlim = c(7, 194),
      xaxt = "n",
@@ -622,7 +628,7 @@ legend(x = "topright" , legend = c("a)"), bty = "n", cex = 1.25)
 par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      #ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
@@ -1382,7 +1388,7 @@ par(mar = c(2, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1, 
      main = "",
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
@@ -1421,7 +1427,7 @@ legend(x = "topright", cex = 1, ncol = 2,
 par(mar = c(0, 0, 0, 0)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Vorhersagedistanz [m]"),
+mtext(expression("Mittlere Vorhersagedistanz [m]"),
       side = 1, line = -1, col = 1, cex = 1)
 
 
@@ -1541,7 +1547,7 @@ par(mar = c(2, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1, 
      main = "",
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      ylab = "",
      xlim = c(7, 194),
      xaxt = "n",
@@ -1580,7 +1586,7 @@ legend(x = "topright", cex = 1, ncol = 2,
 par(mar = c(0, 0, 0, 0)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Vorhersagedistanz [m]"),
+mtext(expression("Mittlere Vorhersagedistanz [m]"),
       side = 1, line = -1, col = 1, cex = 1)
 
 ##

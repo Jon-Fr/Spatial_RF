@@ -557,7 +557,7 @@ legend(x = "bottomright" , legend = c("a)"), bty = "n", cex = 1.25)
 par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      #ylab = "Mittlerer RMSE",
      xlim = c(7, 194),
      xaxt = "n",
@@ -646,7 +646,7 @@ legend(x = "bottomleft" , legend = c("a)"), bty = "n", cex = 1.25)
 par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      #ylab = "Mittlerer RMSE",
      xlim = c(7, 194),
      xaxt = "n",
@@ -704,7 +704,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/L]",
+     ylab = "Verzerrung [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-25, 20),
@@ -739,7 +739,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [Box-Cox]",
+     ylab = "Verzerrung [Box-Cox]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-0.3, 0.6),
@@ -773,7 +773,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/L]",
+     ylab = "Verzerrung [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-25, 20),
@@ -813,7 +813,7 @@ legend(x = "topright" , legend = c("c)"), bty = "n", cex = 1.25)
 par(mar = c(0, 4, 0, 1)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Vorhersagedistanz [m]"),
+mtext(expression("Mittlere Vorhersagedistanz [m]"),
       side = 1, line = -1, col = 1, cex = 1)
 
 
@@ -823,7 +823,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/L]",
+     ylab = "Verzerrung [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-5, 4),
@@ -859,7 +859,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [Box-Cox]",
+     ylab = "Verzerrung [Box-Cox]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-0.4, 0.3),
@@ -893,7 +893,7 @@ par(mar = c(2, 4, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
      xlab = "", 
-     ylab = "Mittlerer Bias [mg/l]",
+     ylab = "Verzerrung [mg/L]",
      xlim = c(7, 194),
      xaxt = "n",
      ylim = c(-5, 4),
@@ -934,7 +934,7 @@ legend(x = "bottomright" , legend = c("c)"), bty = "n", cex = 1.25)
 par(mar = c(0, 4, 0, 1)) # bottom, left, top, right margins
 plot(NULL, ylab = "", bty = "n", 
      xlim = c(0, 0.1), ylim = c(0, 0.1), xaxt = "n", yaxt = "n")
-mtext(expression("Vorhersagedistanz [m]"),
+mtext(expression("Mittlere Vorhersagedistanz [m]"),
       side = 1, line = -1, col = 1, cex = 1)
 
 ################################################################################

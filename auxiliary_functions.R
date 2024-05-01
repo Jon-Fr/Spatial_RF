@@ -30,7 +30,7 @@ info_dist = function(path_predArea, dataPoints_df, c_r_s, resolution,
   
   # Create raster grid from polygon
   raster_pl = terra::rast(pred_area, resolution = resolution, crs = c_r_s)
-    
+  plot(raster_pl)  
   # Set crs
   #terra::crs(raster_pl) = c_r_s
   
@@ -43,8 +43,8 @@ info_dist = function(path_predArea, dataPoints_df, c_r_s, resolution,
   # Calculate the prediction distance
   dist_dp_pl = terra::distance(raster_pl, spv_dp, unit="m")
   
-  # Set raster cell values to NA that where NA in the original raster
-  dist_dp_pl = terra::mask(dist_dp_pl, raster_pl)
+  # Set raster cell values to NA that where NA in the file
+  dist_dp_pl = terra::mask(dist_dp_pl, pred_area)
   
   # Raster to df
   dist_dp_pl_df = terra::as.data.frame(dist_dp_pl)

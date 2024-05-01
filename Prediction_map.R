@@ -402,3 +402,23 @@ all_p95 = quantile(x = temp, probs = c(0.95))
 ################################################################################
 ## End (post processing (base))
 ################################################################################
+
+################################################################################
+## Calculate correlation
+################################################################################
+# Load data
+NuM_L_b = readRDS("Results/orgNitrate/NuM_L_base_preds_for_pred_map.rds")
+NuM_L_o = readRDS("Results/orgNitrate/NuM_L_preds_for_pred_map.rds")
+WuS_SuB_b = readRDS("Results/orgNitrate/WuS_SuB_base_preds_for_pred_map.rds")
+WuS_SuB_o = readRDS("Results/orgNitrate/WuS_SuB_preds_for_pred_map.rds")
+
+# Calculate correlation
+s_cor_c_NuM_L = cor(NuM_L_b$RF_predictions, NuM_L_o$final_prediction, 
+                    method = "spearman")
+s_cor_c_WuS_SuB = cor(WuS_SuB_b$RF_predictions, WuS_SuB_o$final_prediction, 
+                      method = "spearman")
+
+
+################################################################################
+## End (calculate correlation)
+################################################################################

@@ -530,7 +530,7 @@ legend(x = "bottomleft" , legend = c("a)"), bty = "n", cex = 1.25)
 par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      #ylab = "Mittlerer RMSE",
      xlim = c(7, 194),
      xaxt = "n",
@@ -630,7 +630,7 @@ legend(x = "topright" , legend = c("a)"), bty = "n", cex = 1.25)
 par(mar = c(4, 0, 0, 1)) # bottom, left, top, right margins
 # Create a blank plotting space
 plot(x = 1,                 
-     xlab = "Vorhersagedistanz [m]", 
+     xlab = "Mittlere Vorhersagedistanz [m]", 
      #ylab = "Mittlerer RMSE",
      xlim = c(7, 194),
      xaxt = "n",

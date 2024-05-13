@@ -172,6 +172,9 @@ legend(x = "topright" , legend = c("d)"), bty = "n", cex = 1.25)
 load("Data/NuM_L.rda")
 load("Data/WuS_SuB.rda")
 
+# Fewer decimal places, apply penalty on exponential notation 
+options("scipen"= 999, "digits"=4)
+
 ####
 ## Save mean RMSE values in vectors
 ##

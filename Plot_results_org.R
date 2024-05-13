@@ -186,6 +186,8 @@ WuS_SuB_mRMSE_df = data.frame(WuS_SuB_RF_oob_OK, WuS_SuB_loo_OK_RF,
 ################################################################################
 ## Spatial prediction error profile (SPEP)
 ################################################################################
+# Fewer decimal places, apply penalty on exponential notation 
+options("scipen"= 999, "digits"=4)
 
 ####
 ## Save mean RMSE and bias values in vectors

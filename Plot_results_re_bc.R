@@ -1,6 +1,9 @@
 ################################################################################
 ## Calculate mean RMSE and bias of retransformed predictions
 ################################################################################
+# Fewer decimal places, apply penalty on exponential notation 
+options("scipen"= 999, "digits"=4)
+
 # Additional functions that are not included in packages
 source("auxiliary_functions.R", encoding = "UTF-8")
 
@@ -451,7 +454,7 @@ for (i in 1:length(WuS_SuB_obs)){
 # Load original scale and bc scale dfs for comparison 
 load("Results/bcNitrateRe/mRMSE_dfs_org.rda")
 load("Results/bcNitrateRe/mBias_dfs_org.rda")
-load("Results/bcNitrateRe/mBias_dfs_bc.rda")
+load("Results/bcNitrateRe/mBias_dfs_bc.rda")W
 # Multipilcation with -1 makes the interpreation easier 
 WuS_SuB_mBias_df = WuS_SuB_mBias_df * -1
 WuS_SuB_mBias_df_bc = WuS_SuB_mBias_df_bc * -1
